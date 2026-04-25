@@ -96,9 +96,18 @@ export function calculateCategoryStats(
   let total: number;
 
   if (isValueBased) {
-    total = categorySales.reduce((sum, sale) => sum + Number(sale.selling_value), 0);
+    // Washing and Kitchen are value-based.
+    // selling_value is the unit selling value, so multiply by quantity.
+    total = categorySales.reduce(
+      (sum, sale) => sum + (Number(sale.selling_value) * Number(sale.quantity)),
+      0
+    );
   } else {
-    total = categorySales.reduce((sum, sale) => sum + Number(sale.quantity), 0);
+    // AC is quantity-based.
+    total = categorySales.reduce(
+      (sum, sale) => sum + Number(sale.quantity),
+      0
+    );
   }
 
   let target = 0;

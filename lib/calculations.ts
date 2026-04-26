@@ -18,7 +18,7 @@ export function calculateBonusMultiplier(achievement: number): number {
 
 /**
  * AC bonus system
- * Based on quantity achievement percentage
+ * Based on Air Conditioner quantity achievement percentage only
  */
 export function calculateACBonus(achievement: number): number {
   if (achievement >= 131) return 14500;
@@ -103,11 +103,15 @@ export function calculateCategoryStats(
       0
     );
   } else {
-    // AC is quantity-based.
-    total = categorySales.reduce(
-      (sum, sale) => sum + Number(sale.quantity),
-      0
-    );
+    // AC target is quantity-based, but ONLY Air Conditioner units count toward AC target.
+    // Air Purifier belongs to the AC section for extra incentive display,
+    // but it does NOT count toward AC target quantity.
+    total = categorySales.reduce((sum, sale) => {
+      if (sale.model.sub_category === 'air_conditioner') {
+        return sum + Number(sale.quantity);
+      }
+      return sum;
+    }, 0);
   }
 
   let target = 0;
@@ -141,6 +145,8 @@ export function calculateCategoryStats(
     bonusEarned = bonus * multiplier;
   }
 
+  // Extra incentive is calculated for all sales inside the category.
+  // For AC section, this includes both Air Conditioner and Air Purifier.
   const extraIncentive = categorySales.reduce(
     (sum, sale) => sum + (Number(sale.model.extra_incentive) * Number(sale.quantity)),
     0

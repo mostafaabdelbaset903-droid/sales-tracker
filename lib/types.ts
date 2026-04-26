@@ -6,7 +6,8 @@ export type SubCategory =
   | 'refrigerator' 
   | 'built_in' 
   | 'microwave'
-  | 'air_conditioner';
+  | 'air_conditioner'
+  | 'air_purifier';
 
 // Main category types
 export type MainCategory = 'washing' | 'kitchen' | 'ac';
@@ -20,6 +21,7 @@ export const SUB_CATEGORY_TO_MAIN: Record<SubCategory, MainCategory> = {
   built_in: 'kitchen',
   microwave: 'kitchen',
   air_conditioner: 'ac',
+  air_purifier: 'ac',
 };
 
 // Sub-category display names
@@ -31,6 +33,7 @@ export const SUB_CATEGORY_LABELS: Record<SubCategory, string> = {
   built_in: 'Built-in',
   microwave: 'Microwave',
   air_conditioner: 'Air Conditioner',
+  air_purifier: 'Air Purifier',
 };
 
 // Main category display names
@@ -44,7 +47,7 @@ export const MAIN_CATEGORY_LABELS: Record<MainCategory, string> = {
 export const SUB_CATEGORIES_BY_MAIN: Record<MainCategory, SubCategory[]> = {
   washing: ['washing_machine', 'dryer', 'vacuum'],
   kitchen: ['refrigerator', 'built_in', 'microwave'],
-  ac: ['air_conditioner'],
+  ac: ['air_conditioner', 'air_purifier'],
 };
 
 // All sub-categories list
@@ -56,6 +59,7 @@ export const ALL_SUB_CATEGORIES: SubCategory[] = [
   'built_in',
   'microwave',
   'air_conditioner',
+  'air_purifier',
 ];
 
 // Settings interface

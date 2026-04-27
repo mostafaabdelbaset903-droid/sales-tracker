@@ -13,7 +13,7 @@ import {
   WashingMachine,
   UtensilsCrossed,
   Wind,
-  TrendingUp,
+  Tv,
   Gift,
   Award,
   ChevronDown,
@@ -41,7 +41,7 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
       </div>
 
       {/* Category Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <CategoryCard
           stats={data.washing}
           icon={WashingMachine}
@@ -53,6 +53,11 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
           color="bg-emerald-500"
         />
         <CategoryCard
+          stats={data.entertainment}
+          icon={Tv}
+          color="bg-purple-500"
+        />
+        <CategoryCard
           stats={data.ac}
           icon={Wind}
           color="bg-cyan-500"
@@ -60,7 +65,7 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
       </div>
 
       {/* Earnings Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <SummaryCard
           title="Washing Bonus"
           value={formatCurrency(data.washing.bonusEarned)}
@@ -74,6 +79,13 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
           subtitle={`${getBonusTier(data.kitchen.achievement)} of ${formatCurrency(data.kitchen.bonus)}`}
           icon={Award}
           color="text-emerald-500"
+        />
+        <SummaryCard
+          title="Entertainment Bonus"
+          value={formatCurrency(data.entertainment.bonusEarned)}
+          subtitle={`${getBonusTier(data.entertainment.achievement)} of ${formatCurrency(data.entertainment.bonus)}`}
+          icon={Award}
+          color="text-purple-500"
         />
         <SummaryCard
           title="Extra Incentives"
@@ -119,12 +131,21 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
             tier={getBonusTier(data.kitchen.achievement)}
           />
           <BreakdownRow
+            label="Entertainment Bonus"
+            value={data.entertainment.bonusEarned}
+            tier={getBonusTier(data.entertainment.achievement)}
+          />
+          <BreakdownRow
             label="Washing Incentives"
             value={data.washing.extraIncentive}
           />
           <BreakdownRow
             label="Kitchen Incentives"
             value={data.kitchen.extraIncentive}
+          />
+          <BreakdownRow
+            label="Entertainment Incentives"
+            value={data.entertainment.extraIncentive}
           />
           <BreakdownRow
             label="AC Incentives"
@@ -157,7 +178,9 @@ function CategoryCard({ stats, icon: Icon, color }: CategoryCardProps) {
   const remaining90 = calculateRemaining(stats.total, stats.target, 90);
   const remaining100 = calculateRemaining(stats.total, stats.target, 100);
 
-  const progressPercent = Math.min((stats.total / stats.target) * 100, 100);
+  const progressPercent =
+    stats.target > 0 ? Math.min((stats.total / stats.target) * 100, 100) : 0;
+
   const progressColor =
     stats.achievement >= 100
       ? "bg-emerald-500"

@@ -26,10 +26,14 @@ export function ModelsManager({ models }: ModelsManagerProps) {
   // Group models by main category
   const modelsByCategory = models.reduce((acc, model) => {
     const main = SUB_CATEGORY_TO_MAIN[model.sub_category];
-    if (!acc[main]) acc[main] = [];
-    acc[main].push(model);
+
+    if (!acc[main]) {
+      acc[main] = [];
+    }
+
+    acc[main]!.push(model);
     return acc;
-  }, {} as Record<MainCategory, Model[]>);
+  }, {} as Partial<Record<MainCategory, Model[]>>);
 
   const handleDelete = async (modelId: string) => {
     const supabase = createClient();
@@ -125,12 +129,14 @@ export function ModelsManager({ models }: ModelsManagerProps) {
                           <h3 className="font-medium text-foreground truncate">
                             {model.model_name}
                           </h3>
+
                           {!model.is_active && (
                             <span className="text-xs px-2 py-0.5 bg-muted rounded-full text-muted-foreground">
                               Inactive
                             </span>
                           )}
                         </div>
+
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {SUB_CATEGORY_LABELS[model.sub_category]}
                         </p>
@@ -140,6 +146,7 @@ export function ModelsManager({ models }: ModelsManagerProps) {
                         <button
                           onClick={() => setEditingModel(model)}
                           className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                          aria-label="Edit model"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
@@ -147,6 +154,7 @@ export function ModelsManager({ models }: ModelsManagerProps) {
                         <button
                           onClick={() => setDeleteConfirm(model.id)}
                           className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                          aria-label="Delete model"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -200,6 +208,7 @@ export function ModelsManager({ models }: ModelsManagerProps) {
             <h3 className="text-lg font-semibold text-foreground">
               Delete Model?
             </h3>
+
             <p className="text-sm text-muted-foreground mt-2">
               This will permanently delete this model. Sales records linked to
               this model will not be affected.
@@ -245,6 +254,22 @@ function ModelModal({ model, onClose }: ModelModalProps) {
     is_active: model?.is_active ?? true,
   });
 
+  // Group sub-categories by main category for the dropdown
+  const subCategoriesByMain: Record<MainCategory, SubCategory[]> = {
+    washing: ALL_SUB_CATEGORIES.filter(
+      (subCategory) => SUB_CATEGORY_TO_MAIN[subCategory] === "washing"
+    ),
+    kitchen: ALL_SUB_CATEGORIES.filter(
+      (subCategory) => SUB_CATEGORY_TO_MAIN[subCategory] === "kitchen"
+    ),
+    ac: ALL_SUB_CATEGORIES.filter(
+      (subCategory) => SUB_CATEGORY_TO_MAIN[subCategory] === "ac"
+    ),
+    entertainment: ALL_SUB_CATEGORIES.filter(
+      (subCategory) => SUB_CATEGORY_TO_MAIN[subCategory] === "entertainment"
+    ),
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -283,22 +308,6 @@ function ModelModal({ model, onClose }: ModelModalProps) {
     });
   };
 
-  // Group sub-categories by main category for the dropdown
-  const subCategoriesByMain: Record<MainCategory, SubCategory[]> = {
-    washing: ALL_SUB_CATEGORIES.filter(
-      (sc) => SUB_CATEGORY_TO_MAIN[sc] === "washing"
-    ),
-    kitchen: ALL_SUB_CATEGORIES.filter(
-      (sc) => SUB_CATEGORY_TO_MAIN[sc] === "kitchen"
-    ),
-    ac: ALL_SUB_CATEGORIES.filter(
-      (sc) => SUB_CATEGORY_TO_MAIN[sc] === "ac"
-    ),
-    entertainment: ALL_SUB_CATEGORIES.filter(
-      (sc) => SUB_CATEGORY_TO_MAIN[sc] === "entertainment"
-    ),
-  };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-xl border border-border p-6 max-w-md w-full shadow-lg">
@@ -310,6 +319,7 @@ function ModelModal({ model, onClose }: ModelModalProps) {
           <button
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-accent text-muted-foreground"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
@@ -322,9 +332,145 @@ function ModelModal({ model, onClose }: ModelModalProps) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Model Name */}
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">
               Model Name
             </label>
+
             <input
-              type="text
+              type="text"
+              value={formData.model_name}
+              onChange={(e) =>
+                setFormData({ ...formData, model_name: e.target.value })
+              }
+              placeholder="e.g., GC-X257CQEW"
+              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+
+          {/* Sub-category */}
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-foreground">
+              Sub-category
+            </label>
+
+            <select
+              value={formData.sub_category}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  sub_category: e.target.value as SubCategory,
+                })
+              }
+              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {Object.entries(subCategoriesByMain).map(([main, subCategories]) => (
+                <optgroup
+                  key={main}
+                  label={MAIN_CATEGORY_LABELS[main as MainCategory]}
+                >
+                  {subCategories.map((subCategory) => (
+                    <option key={subCategory} value={subCategory}>
+                      {SUB_CATEGORY_LABELS[subCategory]}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+
+          {/* Price and Incentive */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">
+                Default Price (EGP)
+              </label>
+
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.default_price}
+                onChange={(e) =>
+                  setFormData({ ...formData, default_price: e.target.value })
+                }
+                placeholder="0"
+                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-foreground">
+                Extra Incentive (EGP)
+              </label>
+
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.extra_incentive}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    extra_incentive: e.target.value,
+                  })
+                }
+                placeholder="0"
+                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+
+          {/* Active Switch */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                setFormData({ ...formData, is_active: !formData.is_active })
+              }
+              className={`w-12 h-6 rounded-full transition-colors relative ${
+                formData.is_active ? "bg-primary" : "bg-muted"
+              }`}
+            >
+              <span
+                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                  formData.is_active ? "left-7" : "left-1"
+                }`}
+              />
+            </button>
+
+            <span className="text-sm text-foreground">
+              {formData.is_active ? "Active" : "Inactive"}
+            </span>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 h-10 border border-border rounded-lg text-sm font-medium hover:bg-accent transition-colors"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              disabled={isPending}
+              className="flex-1 h-10 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : model ? (
+                "Save Changes"
+              ) : (
+                "Add Model"
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

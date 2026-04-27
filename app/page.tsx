@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Navigation } from "@/components/navigation";
 import { DashboardContent } from "@/components/dashboard-content";
@@ -6,9 +5,9 @@ import type { Settings, SaleWithModel } from "@/lib/types";
 import { getMonthDateRange } from "@/lib/calculations";
 
 interface DashboardPageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     sales_person?: string;
-  };
+  }>;
 }
 
 const defaultSettings: Settings = {
@@ -28,7 +27,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const supabase = await createClient();
   const { start, end } = getMonthDateRange();
 
-  const selectedPerson = searchParams?.sales_person || "All";
+  const params = await searchParams;
+  const selectedPerson = params?.sales_person || "All";
 
   let settings: Settings = defaultSettings;
 
@@ -54,7 +54,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .eq("sales_person", selectedPerson)
       .single();
 
-    settings = settingsData || defaultSettings;
+    settings = settingsData || {
+      ...defaultSettings,
+      id: selectedPerson === "Amin" ? 2 : 1,
+    };
   }
 
   let salesQuery = supabase
@@ -100,7 +103,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               const isActive = selectedPerson === person;
 
               return (
-                <Link
+                <a
                   key={person}
                   href={href}
                   className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
@@ -110,7 +113,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                   }`}
                 >
                   {person}
-                </Link>
+                </a>
               );
             })}
           </div>

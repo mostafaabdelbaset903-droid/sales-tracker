@@ -21,6 +21,7 @@ export function AddSaleForm({ models }: AddSaleFormProps) {
 
   const [formData, setFormData] = useState({
     sale_date: today,
+    sales_person: "Mostafa",
     model_id: "",
     quantity: 1,
     selling_value: "",
@@ -47,6 +48,11 @@ export function AddSaleForm({ models }: AddSaleFormProps) {
     setError(null);
     setSuccess(false);
 
+    if (!formData.sales_person) {
+      setError("Please select a sales person");
+      return;
+    }
+
     if (!formData.model_id) {
       setError("Please select a model");
       return;
@@ -63,6 +69,7 @@ export function AddSaleForm({ models }: AddSaleFormProps) {
 
       const { error: insertError } = await supabase.from("sales").insert({
         sale_date: formData.sale_date,
+        sales_person: formData.sales_person,
         model_id: formData.model_id,
         quantity: formData.quantity,
         selling_value: isAC ? 0 : Number(formData.selling_value),
@@ -75,9 +82,11 @@ export function AddSaleForm({ models }: AddSaleFormProps) {
       }
 
       setSuccess(true);
+
       // Reset form
       setFormData({
         sale_date: today,
+        sales_person: formData.sales_person,
         model_id: "",
         quantity: 1,
         selling_value: "",
@@ -135,8 +144,29 @@ export function AddSaleForm({ models }: AddSaleFormProps) {
           />
         </div>
 
-        {/* Quantity */}
+        {/* Sales Person */}
         <div className="space-y-2">
+          <label
+            htmlFor="sales_person"
+            className="block text-sm font-medium text-foreground"
+          >
+            Sales Person
+          </label>
+          <select
+            id="sales_person"
+            value={formData.sales_person}
+            onChange={(e) =>
+              setFormData({ ...formData, sales_person: e.target.value })
+            }
+            className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="Mostafa">Mostafa</option>
+            <option value="Amin">Amin</option>
+          </select>
+        </div>
+
+        {/* Quantity */}
+        <div className="space-y-2 sm:col-span-2">
           <label
             htmlFor="quantity"
             className="block text-sm font-medium text-foreground"

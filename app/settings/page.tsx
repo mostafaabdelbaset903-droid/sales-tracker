@@ -1,21 +1,20 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Navigation } from "@/components/navigation";
 import { SettingsManager } from "@/components/settings-manager";
 import type { Settings } from "@/lib/types";
 
 interface SettingsPageProps {
-  searchParams?: {
+  searchParams?: Promise<{
     sales_person?: string;
-  };
+  }>;
 }
 
 export default async function SettingsPage({ searchParams }: SettingsPageProps) {
   const supabase = await createClient();
 
-  const selectedPerson = searchParams?.sales_person || "Mostafa";
+  const params = await searchParams;
+  const selectedPerson = params?.sales_person || "Mostafa";
 
-  // Fetch settings for selected person
   const { data: settingsData } = await supabase
     .from("settings")
     .select("*")
@@ -54,7 +53,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
               const isActive = selectedPerson === person;
 
               return (
-                <Link
+                <a
                   key={person}
                   href={href}
                   className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
@@ -64,7 +63,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
                   }`}
                 >
                   {person}
-                </Link>
+                </a>
               );
             })}
           </div>

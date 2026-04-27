@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { Model, SubCategory } from "@/lib/types";
+import type { Model, SubCategory, MainCategory } from "@/lib/types";
 import {
   SUB_CATEGORY_TO_MAIN,
   SUB_CATEGORY_LABELS,
@@ -29,7 +29,7 @@ export function ModelsManager({ models }: ModelsManagerProps) {
     if (!acc[main]) acc[main] = [];
     acc[main].push(model);
     return acc;
-  }, {} as Record<string, Model[]>);
+  }, {} as Record<MainCategory, Model[]>);
 
   const handleDelete = async (modelId: string) => {
     const supabase = createClient();
@@ -41,10 +41,30 @@ export function ModelsManager({ models }: ModelsManagerProps) {
     }
   };
 
-  const categoryColors = {
-    washing: { bg: "bg-blue-50", border: "border-blue-200", badge: "bg-blue-500" },
-    kitchen: { bg: "bg-emerald-50", border: "border-emerald-200", badge: "bg-emerald-500" },
-    ac: { bg: "bg-cyan-50", border: "border-cyan-200", badge: "bg-cyan-500" },
+  const categoryColors: Record<
+    MainCategory,
+    { bg: string; border: string; badge: string }
+  > = {
+    washing: {
+      bg: "bg-blue-50",
+      border: "border-blue-200",
+      badge: "bg-blue-500",
+    },
+    kitchen: {
+      bg: "bg-emerald-50",
+      border: "border-emerald-200",
+      badge: "bg-emerald-500",
+    },
+    ac: {
+      bg: "bg-cyan-50",
+      border: "border-cyan-200",
+      badge: "bg-cyan-500",
+    },
+    entertainment: {
+      bg: "bg-purple-50",
+      border: "border-purple-200",
+      badge: "bg-purple-500",
+    },
   };
 
   return (
@@ -71,13 +91,18 @@ export function ModelsManager({ models }: ModelsManagerProps) {
         </div>
       ) : (
         Object.entries(MAIN_CATEGORY_LABELS).map(([category, label]) => {
-          const categoryModels = modelsByCategory[category] || [];
+          const mainCategory = category as MainCategory;
+          const categoryModels = modelsByCategory[mainCategory] || [];
+
           if (categoryModels.length === 0) return null;
 
-          const colors = categoryColors[category as keyof typeof categoryColors];
+          const colors = categoryColors[mainCategory];
 
           return (
-            <div key={category} className={`rounded-xl border ${colors.border} ${colors.bg} p-4`}>
+            <div
+              key={category}
+              className={`rounded-xl border ${colors.border} ${colors.bg} p-4`}
+            >
               <div className="flex items-center gap-2 mb-4">
                 <div className={`w-3 h-3 rounded-full ${colors.badge}`} />
                 <h2 className="font-semibold text-foreground">{label}</h2>
@@ -110,6 +135,7 @@ export function ModelsManager({ models }: ModelsManagerProps) {
                           {SUB_CATEGORY_LABELS[model.sub_category]}
                         </p>
                       </div>
+
                       <div className="flex items-center gap-1 ml-2">
                         <button
                           onClick={() => setEditingModel(model)}
@@ -117,6 +143,7 @@ export function ModelsManager({ models }: ModelsManagerProps) {
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
+
                         <button
                           onClick={() => setDeleteConfirm(model.id)}
                           className="p-1.5 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
@@ -128,15 +155,20 @@ export function ModelsManager({ models }: ModelsManagerProps) {
 
                     <div className="mt-3 pt-3 border-t border-border grid grid-cols-2 gap-2 text-sm">
                       <div>
-                        <p className="text-xs text-muted-foreground">Default Price</p>
+                        <p className="text-xs text-muted-foreground">
+                          Default Price
+                        </p>
                         <p className="font-medium text-foreground">
-                          {model.default_price > 0
+                          {Number(model.default_price) > 0
                             ? formatCurrency(Number(model.default_price))
                             : "-"}
                         </p>
                       </div>
+
                       <div>
-                        <p className="text-xs text-muted-foreground">Extra Incentive</p>
+                        <p className="text-xs text-muted-foreground">
+                          Extra Incentive
+                        </p>
                         <p className="font-medium text-amber-600">
                           {formatCurrency(Number(model.extra_incentive))}
                         </p>
@@ -169,9 +201,10 @@ export function ModelsManager({ models }: ModelsManagerProps) {
               Delete Model?
             </h3>
             <p className="text-sm text-muted-foreground mt-2">
-              This will permanently delete this model. Sales records linked to this
-              model will not be affected.
+              This will permanently delete this model. Sales records linked to
+              this model will not be affected.
             </p>
+
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setDeleteConfirm(null)}
@@ -179,6 +212,7 @@ export function ModelsManager({ models }: ModelsManagerProps) {
               >
                 Cancel
               </button>
+
               <button
                 onClick={() => handleDelete(deleteConfirm)}
                 className="flex-1 h-10 bg-destructive text-destructive-foreground rounded-lg text-sm font-medium hover:bg-destructive/90 transition-colors"
@@ -232,6 +266,7 @@ function ModelModal({ model, onClose }: ModelModalProps) {
       };
 
       let result;
+
       if (model) {
         result = await supabase.from("models").update(data).eq("id", model.id);
       } else {
@@ -249,10 +284,19 @@ function ModelModal({ model, onClose }: ModelModalProps) {
   };
 
   // Group sub-categories by main category for the dropdown
-  const subCategoriesByMain = {
-    washing: ALL_SUB_CATEGORIES.filter((sc) => SUB_CATEGORY_TO_MAIN[sc] === "washing"),
-    kitchen: ALL_SUB_CATEGORIES.filter((sc) => SUB_CATEGORY_TO_MAIN[sc] === "kitchen"),
-    ac: ALL_SUB_CATEGORIES.filter((sc) => SUB_CATEGORY_TO_MAIN[sc] === "ac"),
+  const subCategoriesByMain: Record<MainCategory, SubCategory[]> = {
+    washing: ALL_SUB_CATEGORIES.filter(
+      (sc) => SUB_CATEGORY_TO_MAIN[sc] === "washing"
+    ),
+    kitchen: ALL_SUB_CATEGORIES.filter(
+      (sc) => SUB_CATEGORY_TO_MAIN[sc] === "kitchen"
+    ),
+    ac: ALL_SUB_CATEGORIES.filter(
+      (sc) => SUB_CATEGORY_TO_MAIN[sc] === "ac"
+    ),
+    entertainment: ALL_SUB_CATEGORIES.filter(
+      (sc) => SUB_CATEGORY_TO_MAIN[sc] === "entertainment"
+    ),
   };
 
   return (
@@ -262,6 +306,7 @@ function ModelModal({ model, onClose }: ModelModalProps) {
           <h3 className="text-lg font-semibold text-foreground">
             {model ? "Edit Model" : "Add New Model"}
           </h3>
+
           <button
             onClick={onClose}
             className="p-1 rounded-lg hover:bg-accent text-muted-foreground"
@@ -282,125 +327,4 @@ function ModelModal({ model, onClose }: ModelModalProps) {
               Model Name
             </label>
             <input
-              type="text"
-              value={formData.model_name}
-              onChange={(e) =>
-                setFormData({ ...formData, model_name: e.target.value })
-              }
-              placeholder="e.g., Samsung WW80T554DAW"
-              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground">
-              Sub-category
-            </label>
-            <select
-              value={formData.sub_category}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  sub_category: e.target.value as SubCategory,
-                })
-              }
-              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              {Object.entries(subCategoriesByMain).map(([main, subCats]) => (
-                <optgroup
-                  key={main}
-                  label={MAIN_CATEGORY_LABELS[main as keyof typeof MAIN_CATEGORY_LABELS]}
-                >
-                  {subCats.map((sc) => (
-                    <option key={sc} value={sc}>
-                      {SUB_CATEGORY_LABELS[sc]}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-foreground">
-                Default Price (EGP)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.default_price}
-                onChange={(e) =>
-                  setFormData({ ...formData, default_price: e.target.value })
-                }
-                placeholder="0"
-                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-foreground">
-                Extra Incentive (EGP)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.extra_incentive}
-                onChange={(e) =>
-                  setFormData({ ...formData, extra_incentive: e.target.value })
-                }
-                placeholder="0"
-                className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() =>
-                setFormData({ ...formData, is_active: !formData.is_active })
-              }
-              className={`w-12 h-6 rounded-full transition-colors relative ${
-                formData.is_active ? "bg-primary" : "bg-muted"
-              }`}
-            >
-              <span
-                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                  formData.is_active ? "left-7" : "left-1"
-                }`}
-              />
-            </button>
-            <span className="text-sm text-foreground">
-              {formData.is_active ? "Active" : "Inactive"}
-            </span>
-          </div>
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 h-10 border border-border rounded-lg text-sm font-medium hover:bg-accent transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="flex-1 h-10 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : model ? (
-                "Save Changes"
-              ) : (
-                "Add Model"
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
+              type="text

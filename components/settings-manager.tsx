@@ -4,7 +4,6 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Settings } from "@/lib/types";
-import { formatCurrency } from "@/lib/calculations";
 import {
   WashingMachine,
   UtensilsCrossed,
@@ -13,6 +12,7 @@ import {
   Loader2,
   Check,
   Info,
+  Tv,
 } from "lucide-react";
 
 interface SettingsManagerProps {
@@ -26,11 +26,13 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    washing_target: settings.washing_target.toString(),
-    washing_bonus: settings.washing_bonus.toString(),
-    kitchen_target: settings.kitchen_target.toString(),
-    kitchen_bonus: settings.kitchen_bonus.toString(),
-    ac_target: settings.ac_target.toString(),
+    washing_target: settings.washing_target?.toString() || "0",
+    washing_bonus: settings.washing_bonus?.toString() || "0",
+    kitchen_target: settings.kitchen_target?.toString() || "0",
+    kitchen_bonus: settings.kitchen_bonus?.toString() || "0",
+    ac_target: settings.ac_target?.toString() || "0",
+    entertainment_target: settings.entertainment_target?.toString() || "0",
+    entertainment_bonus: settings.entertainment_bonus?.toString() || "0",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -50,6 +52,8 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
           kitchen_target: Number(formData.kitchen_target) || 0,
           kitchen_bonus: Number(formData.kitchen_bonus) || 0,
           ac_target: Number(formData.ac_target) || 0,
+          entertainment_target: Number(formData.entertainment_target) || 0,
+          entertainment_bonus: Number(formData.entertainment_bonus) || 0,
         });
 
       if (updateError) {
@@ -90,6 +94,9 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
               <li>Achievement &ge; 80%: <span className="text-amber-600 font-medium">60% of bonus</span></li>
               <li>Achievement &lt; 80%: <span className="text-red-500 font-medium">No bonus</span></li>
             </ul>
+            <p className="text-xs text-muted-foreground mt-3">
+              This rule applies to Washing, Kitchen, and Entertainment categories.
+            </p>
           </div>
         </div>
       </div>
@@ -188,6 +195,53 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
         </div>
       </div>
 
+      {/* Entertainment Category */}
+      <div className="bg-card rounded-xl border border-purple-200 shadow-sm overflow-hidden">
+        <div className="bg-purple-50 px-4 py-3 border-b border-purple-200">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center">
+              <Tv className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground">Entertainment Category</h2>
+              <p className="text-xs text-muted-foreground">
+                TV, AV
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="p-4 grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-foreground">
+              Monthly Target (EGP)
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={formData.entertainment_target}
+              onChange={(e) =>
+                setFormData({ ...formData, entertainment_target: e.target.value })
+              }
+              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-foreground">
+              Full Bonus (EGP)
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={formData.entertainment_bonus}
+              onChange={(e) =>
+                setFormData({ ...formData, entertainment_bonus: e.target.value })
+              }
+              className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Air Conditioning Category */}
       <div className="bg-card rounded-xl border border-cyan-200 shadow-sm overflow-hidden">
         <div className="bg-cyan-50 px-4 py-3 border-b border-cyan-200">
@@ -198,7 +252,7 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
             <div>
               <h2 className="font-semibold text-foreground">Air Conditioning Category</h2>
               <p className="text-xs text-muted-foreground">
-                Air Conditioner (tracked by units)
+                Air Conditioner tracked by units. Air Purifier incentive is counted separately.
               </p>
             </div>
           </div>
@@ -218,7 +272,7 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
               className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Incentive system for AC will be configured later
+              AC bonus uses tiered quantity achievement. Air Purifier does not increase AC units target.
             </p>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { SUB_CATEGORY_TO_MAIN, MAIN_CATEGORY_LABELS } from './types';
 
 /**
  * Calculate bonus based on achievement percentage
- * Rules for Washing and Kitchen:
+ * Rules for Washing, Kitchen, and Entertainment:
  * - >= 100%: 100% of bonus
  * - >= 90%: 70% of bonus
  * - >= 80%: 60% of bonus
@@ -96,7 +96,7 @@ export function calculateCategoryStats(
   let total: number;
 
   if (isValueBased) {
-    // Washing and Kitchen are value-based.
+    // Washing, Kitchen, and Entertainment are value-based.
     // selling_value is the unit selling value, so multiply by quantity.
     total = categorySales.reduce(
       (sum, sale) => sum + (Number(sale.selling_value) * Number(sale.quantity)),
@@ -126,6 +126,11 @@ export function calculateCategoryStats(
     case 'kitchen':
       target = Number(settings.kitchen_target);
       bonus = Number(settings.kitchen_bonus);
+      break;
+
+    case 'entertainment':
+      target = Number(settings.entertainment_target);
+      bonus = Number(settings.entertainment_bonus);
       break;
 
     case 'ac':
@@ -175,15 +180,27 @@ export function calculateDashboardData(
   const washing = calculateCategoryStats('washing', sales, settings);
   const kitchen = calculateCategoryStats('kitchen', sales, settings);
   const ac = calculateCategoryStats('ac', sales, settings);
+  const entertainment = calculateCategoryStats('entertainment', sales, settings);
 
-  const totalBonus = washing.bonusEarned + kitchen.bonusEarned + ac.bonusEarned;
-  const totalExtraIncentive = washing.extraIncentive + kitchen.extraIncentive + ac.extraIncentive;
+  const totalBonus =
+    washing.bonusEarned +
+    kitchen.bonusEarned +
+    ac.bonusEarned +
+    entertainment.bonusEarned;
+
+  const totalExtraIncentive =
+    washing.extraIncentive +
+    kitchen.extraIncentive +
+    ac.extraIncentive +
+    entertainment.extraIncentive;
+
   const grandTotal = totalBonus + totalExtraIncentive;
 
   return {
     washing,
     kitchen,
     ac,
+    entertainment,
     totalBonus,
     totalExtraIncentive,
     grandTotal,

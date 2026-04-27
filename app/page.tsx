@@ -11,31 +11,52 @@ interface DashboardPageProps {
   };
 }
 
+const defaultSettings: Settings = {
+  id: 1,
+  washing_target: 0,
+  washing_bonus: 0,
+  kitchen_target: 0,
+  kitchen_bonus: 0,
+  ac_target: 0,
+  entertainment_target: 0,
+  entertainment_bonus: 0,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const supabase = await createClient();
   const { start, end } = getMonthDateRange();
 
   const selectedPerson = searchParams?.sales_person || "All";
 
-  // Fetch settings
-  const { data: settingsData } = await supabase
-    .from("settings")
-    .select("*")
-    .eq("id", 1)
-    .single();
+  let settings: Settings = defaultSettings;
 
-  const settings: Settings = settingsData || {
-    id: 1,
-    washing_target: 100000,
-    washing_bonus: 3500,
-    kitchen_target: 100000,
-    kitchen_bonus: 2500,
-    ac_target: 10,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
+  if (selectedPerson === "All") {
+    const { data: allSettings } = await supabase
+      .from("settings")
+      .select("*");
 
-  // Fetch monthly sales with model data
+    settings = {
+      ...defaultSettings,
+      washing_target: (allSettings || []).reduce((sum, s) => sum + Number(s.washing_target || 0), 0),
+      washing_bonus: (allSettings || []).reduce((sum, s) => sum + Number(s.washing_bonus || 0), 0),
+      kitchen_target: (allSettings || []).reduce((sum, s) => sum + Number(s.kitchen_target || 0), 0),
+      kitchen_bonus: (allSettings || []).reduce((sum, s) => sum + Number(s.kitchen_bonus || 0), 0),
+      ac_target: (allSettings || []).reduce((sum, s) => sum + Number(s.ac_target || 0), 0),
+      entertainment_target: (allSettings || []).reduce((sum, s) => sum + Number(s.entertainment_target || 0), 0),
+      entertainment_bonus: (allSettings || []).reduce((sum, s) => sum + Number(s.entertainment_bonus || 0), 0),
+    };
+  } else {
+    const { data: settingsData } = await supabase
+      .from("settings")
+      .select("*")
+      .eq("sales_person", selectedPerson)
+      .single();
+
+    settings = settingsData || defaultSettings;
+  }
+
   let salesQuery = supabase
     .from("sales")
     .select(`
@@ -46,7 +67,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     .lte("sale_date", end)
     .order("sale_date", { ascending: false });
 
-  // Filter by sales person if selected
   if (selectedPerson !== "All") {
     salesQuery = salesQuery.eq("sales_person", selectedPerson);
   }

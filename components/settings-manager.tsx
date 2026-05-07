@@ -18,11 +18,13 @@ import {
 interface SettingsManagerProps {
   settings: Settings;
   salesPerson: string;
+  targetMonth: string;
 }
 
 export function SettingsManager({
   settings,
   salesPerson,
+  targetMonth,
 }: SettingsManagerProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -47,19 +49,25 @@ export function SettingsManager({
     startTransition(async () => {
       const supabase = createClient();
 
-      const settingsId = salesPerson === "Amin" ? 2 : 1;
+      const settingsId = `${salesPerson}-${targetMonth}`;
 
       const { error: updateError } = await supabase.from("settings").upsert(
         {
           id: settingsId,
           sales_person: salesPerson,
+          target_month: targetMonth,
+
           washing_target: Number(formData.washing_target) || 0,
           washing_bonus: Number(formData.washing_bonus) || 0,
+
           kitchen_target: Number(formData.kitchen_target) || 0,
           kitchen_bonus: Number(formData.kitchen_bonus) || 0,
+
           ac_target: Number(formData.ac_target) || 0,
+
           entertainment_target: Number(formData.entertainment_target) || 0,
           entertainment_bonus: Number(formData.entertainment_bonus) || 0,
+
           updated_at: new Date().toISOString(),
         },
         {
@@ -89,7 +97,7 @@ export function SettingsManager({
       {success && (
         <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center gap-2 text-sm">
           <Check className="w-4 h-4" />
-          Settings saved successfully for {salesPerson}!
+          Settings saved successfully for {salesPerson} - {targetMonth}!
         </div>
       )}
 
@@ -97,6 +105,10 @@ export function SettingsManager({
         <p className="text-sm text-foreground">
           You are editing settings for:{" "}
           <span className="font-bold text-primary">{salesPerson}</span>
+        </p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Target month:{" "}
+          <span className="font-semibold text-foreground">{targetMonth}</span>
         </p>
       </div>
 
@@ -348,7 +360,7 @@ export function SettingsManager({
         ) : (
           <>
             <Save className="w-4 h-4" />
-            Save Settings for {salesPerson}
+            Save Settings for {salesPerson} - {targetMonth}
           </>
         )}
       </button>

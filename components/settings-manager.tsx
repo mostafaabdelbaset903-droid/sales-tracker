@@ -17,9 +17,10 @@ import {
 
 interface SettingsManagerProps {
   settings: Settings;
+  salesPerson: string;
 }
 
-export function SettingsManager({ settings }: SettingsManagerProps) {
+export function SettingsManager({ settings, salesPerson }: SettingsManagerProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [success, setSuccess] = useState(false);
@@ -43,18 +44,27 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
     startTransition(async () => {
       const supabase = createClient();
 
+      const settingsId = salesPerson === "Amin" ? 2 : 1;
+
       const { error: updateError } = await supabase
         .from("settings")
-        .upsert({
-          id: 1,
-          washing_target: Number(formData.washing_target) || 0,
-          washing_bonus: Number(formData.washing_bonus) || 0,
-          kitchen_target: Number(formData.kitchen_target) || 0,
-          kitchen_bonus: Number(formData.kitchen_bonus) || 0,
-          ac_target: Number(formData.ac_target) || 0,
-          entertainment_target: Number(formData.entertainment_target) || 0,
-          entertainment_bonus: Number(formData.entertainment_bonus) || 0,
-        });
+        .upsert(
+          {
+            id: settingsId,
+            sales_person: salesPerson,
+            washing_target: Number(formData.washing_target) || 0,
+            washing_bonus: Number(formData.washing_bonus) || 0,
+            kitchen_target: Number(formData.kitchen_target) || 0,
+            kitchen_bonus: Number(formData.kitchen_bonus) || 0,
+            ac_target: Number(formData.ac_target) || 0,
+            entertainment_target: Number(formData.entertainment_target) || 0,
+            entertainment_bonus: Number(formData.entertainment_bonus) || 0,
+            updated_at: new Date().toISOString(),
+          },
+          {
+            onConflict: "id",
+          }
+        );
 
       if (updateError) {
         setError(updateError.message);
@@ -78,21 +88,48 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
       {success && (
         <div className="p-3 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center gap-2 text-sm">
           <Check className="w-4 h-4" />
-          Settings saved successfully!
+          Settings saved successfully for {salesPerson}!
         </div>
       )}
+
+      <div className="bg-primary/10 rounded-xl border border-primary/20 p-4">
+        <p className="text-sm text-foreground">
+          You are editing settings for:{" "}
+          <span className="font-bold text-primary">{salesPerson}</span>
+        </p>
+      </div>
 
       {/* Bonus Rules Info */}
       <div className="bg-accent/50 rounded-xl border border-border p-4">
         <div className="flex items-start gap-3">
           <Info className="w-5 h-5 text-primary mt-0.5" />
           <div className="text-sm">
-            <p className="font-medium text-foreground mb-2">Bonus Calculation Rules</p>
+            <p className="font-medium text-foreground mb-2">
+              Bonus Calculation Rules
+            </p>
             <ul className="space-y-1 text-muted-foreground">
-              <li>Achievement &ge; 100%: <span className="text-emerald-600 font-medium">100% of bonus</span></li>
-              <li>Achievement &ge; 90%: <span className="text-blue-600 font-medium">70% of bonus</span></li>
-              <li>Achievement &ge; 80%: <span className="text-amber-600 font-medium">60% of bonus</span></li>
-              <li>Achievement &lt; 80%: <span className="text-red-500 font-medium">No bonus</span></li>
+              <li>
+                Achievement &ge; 100%:{" "}
+                <span className="text-emerald-600 font-medium">
+                  100% of bonus
+                </span>
+              </li>
+              <li>
+                Achievement &ge; 90%:{" "}
+                <span className="text-blue-600 font-medium">
+                  70% of bonus
+                </span>
+              </li>
+              <li>
+                Achievement &ge; 80%:{" "}
+                <span className="text-amber-600 font-medium">
+                  60% of bonus
+                </span>
+              </li>
+              <li>
+                Achievement &lt; 80%:{" "}
+                <span className="text-red-500 font-medium">No bonus</span>
+              </li>
             </ul>
             <p className="text-xs text-muted-foreground mt-3">
               This rule applies to Washing, Kitchen, and Entertainment categories.
@@ -116,6 +153,7 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
             </div>
           </div>
         </div>
+
         <div className="p-4 grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">
@@ -131,6 +169,7 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
               className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
+
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">
               Full Bonus (EGP)
@@ -163,6 +202,7 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
             </div>
           </div>
         </div>
+
         <div className="p-4 grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">
@@ -178,6 +218,7 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
               className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
+
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">
               Full Bonus (EGP)
@@ -203,13 +244,14 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
               <Tv className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="font-semibold text-foreground">Entertainment Category</h2>
-              <p className="text-xs text-muted-foreground">
-                TV, AV
-              </p>
+              <h2 className="font-semibold text-foreground">
+                Entertainment Category
+              </h2>
+              <p className="text-xs text-muted-foreground">TV, AV</p>
             </div>
           </div>
         </div>
+
         <div className="p-4 grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">
@@ -220,11 +262,15 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
               min="0"
               value={formData.entertainment_target}
               onChange={(e) =>
-                setFormData({ ...formData, entertainment_target: e.target.value })
+                setFormData({
+                  ...formData,
+                  entertainment_target: e.target.value,
+                })
               }
               className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
+
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">
               Full Bonus (EGP)
@@ -234,7 +280,10 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
               min="0"
               value={formData.entertainment_bonus}
               onChange={(e) =>
-                setFormData({ ...formData, entertainment_bonus: e.target.value })
+                setFormData({
+                  ...formData,
+                  entertainment_bonus: e.target.value,
+                })
               }
               className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
@@ -250,13 +299,17 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
               <Wind className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="font-semibold text-foreground">Air Conditioning Category</h2>
+              <h2 className="font-semibold text-foreground">
+                Air Conditioning Category
+              </h2>
               <p className="text-xs text-muted-foreground">
-                Air Conditioner tracked by units. Air Purifier incentive is counted separately.
+                Air Conditioner tracked by units. Air Purifier incentive is counted
+                separately.
               </p>
             </div>
           </div>
         </div>
+
         <div className="p-4">
           <div className="space-y-1">
             <label className="text-sm font-medium text-foreground">
@@ -272,7 +325,8 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
               className="w-full h-10 px-3 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              AC bonus uses tiered quantity achievement. Air Purifier does not increase AC units target.
+              AC bonus uses tiered quantity achievement. Air Purifier does not
+              increase AC units target.
             </p>
           </div>
         </div>
@@ -292,7 +346,7 @@ export function SettingsManager({ settings }: SettingsManagerProps) {
         ) : (
           <>
             <Save className="w-4 h-4" />
-            Save Settings
+            Save Settings for {salesPerson}
           </>
         )}
       </button>

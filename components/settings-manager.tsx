@@ -20,7 +20,10 @@ interface SettingsManagerProps {
   salesPerson: string;
 }
 
-export function SettingsManager({ settings, salesPerson }: SettingsManagerProps) {
+export function SettingsManager({
+  settings,
+  salesPerson,
+}: SettingsManagerProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [success, setSuccess] = useState(false);
@@ -46,25 +49,23 @@ export function SettingsManager({ settings, salesPerson }: SettingsManagerProps)
 
       const settingsId = salesPerson === "Amin" ? 2 : 1;
 
-      const { error: updateError } = await supabase
-        .from("settings")
-        .upsert(
-          {
-            id: settingsId,
-            sales_person: salesPerson,
-            washing_target: Number(formData.washing_target) || 0,
-            washing_bonus: Number(formData.washing_bonus) || 0,
-            kitchen_target: Number(formData.kitchen_target) || 0,
-            kitchen_bonus: Number(formData.kitchen_bonus) || 0,
-            ac_target: Number(formData.ac_target) || 0,
-            entertainment_target: Number(formData.entertainment_target) || 0,
-            entertainment_bonus: Number(formData.entertainment_bonus) || 0,
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: "id",
-          }
-        );
+      const { error: updateError } = await supabase.from("settings").upsert(
+        {
+          id: settingsId,
+          sales_person: salesPerson,
+          washing_target: Number(formData.washing_target) || 0,
+          washing_bonus: Number(formData.washing_bonus) || 0,
+          kitchen_target: Number(formData.kitchen_target) || 0,
+          kitchen_bonus: Number(formData.kitchen_bonus) || 0,
+          ac_target: Number(formData.ac_target) || 0,
+          entertainment_target: Number(formData.entertainment_target) || 0,
+          entertainment_bonus: Number(formData.entertainment_bonus) || 0,
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "id",
+        }
+      );
 
       if (updateError) {
         setError(updateError.message);
@@ -116,15 +117,11 @@ export function SettingsManager({ settings, salesPerson }: SettingsManagerProps)
               </li>
               <li>
                 Achievement &ge; 90%:{" "}
-                <span className="text-blue-600 font-medium">
-                  70% of bonus
-                </span>
+                <span className="text-blue-600 font-medium">70% of bonus</span>
               </li>
               <li>
                 Achievement &ge; 80%:{" "}
-                <span className="text-amber-600 font-medium">
-                  60% of bonus
-                </span>
+                <span className="text-amber-600 font-medium">60% of bonus</span>
               </li>
               <li>
                 Achievement &lt; 80%:{" "}
@@ -132,7 +129,8 @@ export function SettingsManager({ settings, salesPerson }: SettingsManagerProps)
               </li>
             </ul>
             <p className="text-xs text-muted-foreground mt-3">
-              This rule applies to Washing, Kitchen, and Entertainment categories.
+              This rule applies to Washing, Kitchen, and Entertainment
+              categories.
             </p>
           </div>
         </div>
@@ -146,7 +144,9 @@ export function SettingsManager({ settings, salesPerson }: SettingsManagerProps)
               <WashingMachine className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="font-semibold text-foreground">Washing Category</h2>
+              <h2 className="font-semibold text-foreground">
+                Washing Category
+              </h2>
               <p className="text-xs text-muted-foreground">
                 Washing Machine, Dryer, Vacuum
               </p>
@@ -195,7 +195,9 @@ export function SettingsManager({ settings, salesPerson }: SettingsManagerProps)
               <UtensilsCrossed className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="font-semibold text-foreground">Kitchen Category</h2>
+              <h2 className="font-semibold text-foreground">
+                Kitchen Category
+              </h2>
               <p className="text-xs text-muted-foreground">
                 Refrigerator, Built-in, Microwave
               </p>
@@ -303,8 +305,8 @@ export function SettingsManager({ settings, salesPerson }: SettingsManagerProps)
                 Air Conditioning Category
               </h2>
               <p className="text-xs text-muted-foreground">
-                Air Conditioner tracked by units. Air Purifier incentive is counted
-                separately.
+                Air Conditioner tracked by units. Air Purifier incentive is
+                counted separately.
               </p>
             </div>
           </div>

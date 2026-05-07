@@ -69,7 +69,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           </div>
         </div>
 
-        <SettingsManager settings={settings} />
+        <SettingsManager settings={settings} salesPerson={selectedPerson} />
       </main>
     </div>
   );

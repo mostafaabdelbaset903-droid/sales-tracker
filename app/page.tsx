@@ -42,7 +42,9 @@ function getDateFromMonthParam(monthParam?: string): Date {
   return new Date(year, month - 1, 1);
 }
 
-export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+export default async function DashboardPage({
+  searchParams,
+}: DashboardPageProps) {
   const supabase = await createClient();
 
   const params = await searchParams;
@@ -58,7 +60,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   if (selectedPerson === "All") {
     const { data: allSettings } = await supabase
       .from("settings")
-      .select("*");
+      .select("*")
+      .eq("target_month", selectedMonth);
 
     settings = {
       ...defaultSettings,
@@ -96,7 +99,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       .from("settings")
       .select("*")
       .eq("sales_person", selectedPerson)
-      .single();
+      .eq("target_month", selectedMonth)
+      .maybeSingle();
 
     settings = settingsData || {
       ...defaultSettings,

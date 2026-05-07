@@ -49,7 +49,9 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
 
           <div className="flex flex-wrap gap-2 mt-4">
             {people.map((person) => {
-              const href = `/settings?sales_person=${encodeURIComponent(person)}`;
+              const href = `/settings?sales_person=${encodeURIComponent(
+                person
+              )}`;
               const isActive = selectedPerson === person;
 
               return (

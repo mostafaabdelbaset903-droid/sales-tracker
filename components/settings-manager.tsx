@@ -71,7 +71,7 @@ export function SettingsManager({
           updated_at: new Date().toISOString(),
         },
         {
-          onConflict: "id",
+          onConflict: "sales_person,target_month",
         }
       );
 

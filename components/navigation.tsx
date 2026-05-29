@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
+  BarChart3,
   Plus,
   History,
   Package,
@@ -17,6 +18,7 @@ import { useState } from "react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/product-performance", label: "Performance", icon: BarChart3 },
   { href: "/add-sale", label: "Add Sale", icon: Plus },
   { href: "/history", label: "History", icon: History },
   { href: "/models", label: "Models", icon: Package },
@@ -34,7 +36,9 @@ export function Navigation() {
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">ST</span>
+              <span className="text-primary-foreground font-bold text-sm">
+                ST
+              </span>
             </div>
             <span className="font-semibold text-foreground hidden sm:block">
               Sales Tracker
@@ -46,12 +50,13 @@ export function Navigation() {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -66,8 +71,9 @@ export function Navigation() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-accent"
+            className="md:hidden p-2 rounded-lg hover:bg-accent text-foreground"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? (
               <X className="w-5 h-5" />
@@ -84,6 +90,7 @@ export function Navigation() {
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
+
                 return (
                   <Link
                     key={item.href}

@@ -1,13 +1,23 @@
 "use client"
 
+import Link from "next/link"
 import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
 import {
+  AlertTriangle,
   BarChart3,
   Boxes,
   Gift,
+  History,
+  LayoutDashboard,
+  Package,
   PackageSearch,
+  PieChart,
+  Plus,
+  Settings,
+  Target,
   TrendingUp,
+  Trophy,
   Wallet,
 } from "lucide-react"
 
@@ -63,8 +73,28 @@ type ChartItem = {
   secondaryText?: string
 }
 
+type DonutItem = {
+  label: string
+  value: number
+  percentage: number
+  displayValue: string
+  secondaryText?: string
+  color: string
+}
+
 type ChartVariant = "value" | "quantity" | "contribution"
 type SummaryVariant = "value" | "quantity" | "models" | "incentive"
+
+const DONUT_COLORS = [
+  "#06b6d4",
+  "#3b82f6",
+  "#8b5cf6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#ec4899",
+  "#14b8a6",
+]
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-EG", {
@@ -254,6 +284,22 @@ function getChartAccent(variant: ChartVariant) {
       "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-300",
     glow: "from-cyan-500/10 via-sky-500/5 to-transparent",
   }
+}
+
+function buildDonutItems(
+  rows: { label: string; value: number; secondaryText?: string }[],
+  total: number
+): DonutItem[] {
+  return rows
+    .filter((row) => row.value > 0)
+    .map((row, index) => ({
+      label: row.label,
+      value: row.value,
+      percentage: total > 0 ? (row.value / total) * 100 : 0,
+      displayValue: formatCurrency(row.value),
+      secondaryText: row.secondaryText,
+      color: DONUT_COLORS[index % DONUT_COLORS.length],
+    }))
 }
 
 export default function ProductPerformanceDashboard() {
@@ -531,6 +577,45 @@ export default function ProductPerformanceDashboard() {
     }))
     .sort((a, b) => b.value - a.value)
 
+  const categoryDonutItems = buildDonutItems(
+    Array.from(
+      productPerformance.reduce((map, item) => {
+        const existing = map.get(item.category) || { value: 0, quantity: 0 }
+
+        map.set(item.category, {
+          value: existing.value + item.total_value,
+          quantity: existing.quantity + item.total_quantity,
+        })
+
+        return map
+      }, new Map<string, { value: number; quantity: number }>())
+    )
+      .map(([category, data]) => ({
+        label: category,
+        value: data.value,
+        secondaryText: `${data.quantity} units`,
+      }))
+      .sort((a, b) => b.value - a.value),
+    totalValue
+  )
+
+  const subCategoryDonutItems = buildDonutItems(
+    subCategoryChart.slice(0, 6).map((item) => ({
+      label: item.label,
+      value: item.value,
+      secondaryText: item.secondaryText,
+    })),
+    totalValue
+  )
+
+  const bestCategory = categoryDonutItems[0]
+  const weakestCategory = [...categoryDonutItems]
+    .filter((item) => item.value > 0)
+    .sort((a, b) => a.value - b.value)[0]
+
+  const bestModel = productPerformance[0]
+  const weakestModel = bottomThreeByValue[0]
+
   if (loading) {
     return (
       <div className="p-6 text-foreground">
@@ -561,6 +646,8 @@ export default function ProductPerformanceDashboard() {
           </div>
         </div>
       </div>
+
+      <QuickNavigation />
 
       <div className="grid gap-4 rounded-2xl border bg-card/90 p-4 shadow-sm md:grid-cols-5">
         <div>
@@ -664,9 +751,67 @@ export default function ProductPerformanceDashboard() {
       </div>
 
       <SectionHeader
-        title="Visual Insights"
-        description="Quick view of the strongest models and category contribution."
+        title="Executive Insights"
+        description="A quick management view of the strongest and weakest areas."
       />
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <InsightCard
+          title="Best Category"
+          value={bestCategory?.label || "No data"}
+          subtitle={bestCategory ? bestCategory.displayValue : "No sales found"}
+          icon={<Trophy className="h-5 w-5" />}
+          tone="success"
+        />
+        <InsightCard
+          title="Weakest Category"
+          value={weakestCategory?.label || "No data"}
+          subtitle={
+            weakestCategory ? weakestCategory.displayValue : "No sales found"
+          }
+          icon={<Target className="h-5 w-5" />}
+          tone="warning"
+        />
+        <InsightCard
+          title="Top Model"
+          value={bestModel?.model_name || "No data"}
+          subtitle={bestModel ? formatCurrency(bestModel.total_value) : "No sales"}
+          icon={<PackageSearch className="h-5 w-5" />}
+          tone="info"
+        />
+        <InsightCard
+          title="Needs Push"
+          value={weakestModel?.model_name || "No data"}
+          subtitle={
+            slowMoving.length > 0
+              ? `${slowMoving.length} slow moving items`
+              : "No slow moving items"
+          }
+          icon={<AlertTriangle className="h-5 w-5" />}
+          tone="danger"
+        />
+      </div>
+
+      <SectionHeader
+        title="Visual Insights"
+        description="Different chart styles for share, contribution, and product ranking."
+      />
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <DonutChartCard
+          title="Category Value Share"
+          description="Value split across main categories."
+          items={categoryDonutItems}
+          totalDisplay={formatCurrency(totalValue)}
+        />
+
+        <DonutChartCard
+          title="Sub Category Mix"
+          description="Top sub-categories by sell-out value."
+          items={subCategoryDonutItems}
+          totalDisplay={formatCurrency(totalValue)}
+        />
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <ChartCard
@@ -686,8 +831,8 @@ export default function ProductPerformanceDashboard() {
         </ChartCard>
 
         <ChartCard
-          title="Sub Category Contribution"
-          description="Value share by sub category."
+          title="Sub Category Ranking"
+          description="Ranked by value contribution."
           variant="contribution"
         >
           <SimpleBarChart items={subCategoryChart} variant="contribution" />
@@ -743,6 +888,45 @@ export default function ProductPerformanceDashboard() {
   )
 }
 
+function QuickNavigation() {
+  const links = [
+    { href: "/", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/product-performance", label: "Analysis", icon: PieChart },
+    { href: "/add-sale", label: "Add Sale", icon: Plus },
+    { href: "/history", label: "History", icon: History },
+    { href: "/models", label: "Models", icon: Package },
+    { href: "/settings", label: "Settings", icon: Settings },
+  ]
+
+  return (
+    <div className="rounded-2xl border bg-card/90 p-3 shadow-sm">
+      <div className="mb-2 text-sm font-semibold">Quick Navigation</div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {links.map((item) => {
+          const Icon = item.icon
+          const active = item.href === "/product-performance"
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition-colors ${
+                active
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "bg-background text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function SectionHeader({
   title,
   description,
@@ -787,6 +971,138 @@ function SummaryCard({
       </div>
 
       <p className="text-xs text-muted-foreground">{subtitle}</p>
+    </div>
+  )
+}
+
+function InsightCard({
+  title,
+  value,
+  subtitle,
+  icon,
+  tone,
+}: {
+  title: string
+  value: string
+  subtitle: string
+  icon: ReactNode
+  tone: "success" | "warning" | "info" | "danger"
+}) {
+  const styles = {
+    success:
+      "border-emerald-200 bg-emerald-50/80 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300",
+    warning:
+      "border-amber-200 bg-amber-50/80 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300",
+    info: "border-sky-200 bg-sky-50/80 text-sky-700 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-300",
+    danger:
+      "border-rose-200 bg-rose-50/80 text-rose-700 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300",
+  }
+
+  return (
+    <div className={`rounded-2xl border p-4 shadow-sm ${styles[tone]}`}>
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-sm font-medium opacity-80">{title}</p>
+        <div className="rounded-xl bg-background/70 p-2">{icon}</div>
+      </div>
+
+      <p className="truncate text-xl font-bold text-foreground">{value}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
+    </div>
+  )
+}
+
+function DonutChartCard({
+  title,
+  description,
+  items,
+  totalDisplay,
+}: {
+  title: string
+  description: string
+  items: DonutItem[]
+  totalDisplay: string
+}) {
+  let start = 0
+  const segments = items.map((item) => {
+    const end = start + item.percentage
+    const segment = `${item.color} ${start}% ${end}%`
+    start = end
+    return segment
+  })
+
+  const background =
+    items.length > 0 ? `conic-gradient(${segments.join(", ")})` : undefined
+
+  return (
+    <div className="rounded-2xl border bg-card p-4 shadow-sm">
+      <div className="mb-4 flex items-start gap-3">
+        <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-2 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-300">
+          <PieChart className="h-4 w-4" />
+        </div>
+
+        <div>
+          <h2 className="text-lg font-semibold">{title}</h2>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+      </div>
+
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          No donut chart data found for the selected filters.
+        </p>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-[190px_1fr] md:items-center">
+          <div className="mx-auto flex h-44 w-44 items-center justify-center rounded-full p-4 shadow-inner">
+            <div
+              className="flex h-full w-full items-center justify-center rounded-full"
+              style={{ background }}
+            >
+              <div className="flex h-24 w-24 flex-col items-center justify-center rounded-full bg-card text-center shadow-sm">
+                <span className="text-xs text-muted-foreground">Total</span>
+                <span className="text-sm font-bold text-foreground">
+                  {totalDisplay}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {items.map((item) => (
+              <div
+                key={item.label}
+                className="flex items-center justify-between gap-3 rounded-xl border bg-background/70 p-3"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span
+                    className="h-3 w-3 shrink-0 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {item.label}
+                    </p>
+                    {item.secondaryText && (
+                      <p className="truncate text-xs text-muted-foreground">
+                        {item.secondaryText}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-sm font-bold text-foreground">
+                    {item.percentage.toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {item.displayValue}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

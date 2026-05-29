@@ -48,6 +48,13 @@ type ProductPerformance = {
   status: "Fast" | "Normal" | "Slow"
 }
 
+type ChartItem = {
+  label: string
+  value: number
+  displayValue: string
+  secondaryText?: string
+}
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-EG", {
     style: "currency",
@@ -124,9 +131,16 @@ function inferCategory(
   }
 
   if (
-    ["tv", "television", "oled", "qned", "nano", "uhd", "av", "soundbar"].includes(
-      normalizedSubCategory
-    )
+    [
+      "tv",
+      "television",
+      "oled",
+      "qned",
+      "nano",
+      "uhd",
+      "av",
+      "soundbar",
+    ].includes(normalizedSubCategory)
   ) {
     return "Entertainment"
   }
@@ -402,6 +416,51 @@ export default function ProductPerformanceDashboard() {
     0
   )
 
+  const topFiveValueChart: ChartItem[] = productPerformance
+    .slice(0, 5)
+    .map((item) => ({
+      label: item.model_name,
+      value: item.total_value,
+      displayValue: formatCurrency(item.total_value),
+      secondaryText: `${item.category} / ${item.sub_category}`,
+    }))
+
+  const topFiveQuantityChart: ChartItem[] = [...productPerformance]
+    .sort((a, b) => b.total_quantity - a.total_quantity)
+    .slice(0, 5)
+    .map((item) => ({
+      label: item.model_name,
+      value: item.total_quantity,
+      displayValue: `${item.total_quantity} units`,
+      secondaryText: `${item.category} / ${item.sub_category}`,
+    }))
+
+  const subCategoryChart: ChartItem[] = Array.from(
+    productPerformance.reduce((map, item) => {
+      const existing = map.get(item.sub_category) || {
+        value: 0,
+        quantity: 0,
+      }
+
+      map.set(item.sub_category, {
+        value: existing.value + item.total_value,
+        quantity: existing.quantity + item.total_quantity,
+      })
+
+      return map
+    }, new Map<string, { value: number; quantity: number }>())
+  )
+    .map(([subCategory, data]) => ({
+      label: subCategory,
+      value: data.value,
+      displayValue:
+        totalValue > 0
+          ? `${((data.value / totalValue) * 100).toFixed(1)}%`
+          : "0%",
+      secondaryText: `${formatCurrency(data.value)} • ${data.quantity} units`,
+    }))
+    .sort((a, b) => b.value - a.value)
+
   if (loading) {
     return (
       <div className="p-6 text-foreground">
@@ -513,6 +572,29 @@ export default function ProductPerformanceDashboard() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
+        <ChartCard
+          title="Top 5 Models by Value"
+          description="Highest selling models by EGP value."
+        >
+          <SimpleBarChart items={topFiveValueChart} />
+        </ChartCard>
+
+        <ChartCard
+          title="Top 5 Models by Quantity"
+          description="Highest selling models by units sold."
+        >
+          <SimpleBarChart items={topFiveQuantityChart} />
+        </ChartCard>
+
+        <ChartCard
+          title="Sub Category Contribution"
+          description="Value share by sub category."
+        >
+          <SimpleBarChart items={subCategoryChart} />
+        </ChartCard>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-xl border bg-card p-4">
           <h2 className="mb-4 text-lg font-semibold">Top 3 by Value</h2>
           <ProductTable items={topThreeByValue} />
@@ -554,6 +636,73 @@ function SummaryCard({ title, value }: { title: string; value: string }) {
     <div className="rounded-xl border bg-card p-4">
       <p className="text-sm text-muted-foreground">{title}</p>
       <p className="mt-1 text-xl font-bold">{value}</p>
+    </div>
+  )
+}
+
+function ChartCard({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="rounded-xl border bg-card p-4">
+      <h2 className="text-lg font-semibold">{title}</h2>
+      <p className="mb-4 text-sm text-muted-foreground">{description}</p>
+      {children}
+    </div>
+  )
+}
+
+function SimpleBarChart({ items }: { items: ChartItem[] }) {
+  const maxValue = Math.max(...items.map((item) => item.value), 0)
+
+  if (items.length === 0 || maxValue === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        No chart data found for the selected filters.
+      </p>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {items.map((item) => {
+        const widthPercent =
+          maxValue > 0 ? Math.max((item.value / maxValue) * 100, 3) : 0
+
+        return (
+          <div key={item.label} className="space-y-1">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-foreground">
+                  {item.label}
+                </p>
+                {item.secondaryText && (
+                  <p className="truncate text-xs text-muted-foreground">
+                    {item.secondaryText}
+                  </p>
+                )}
+              </div>
+
+              <p className="shrink-0 text-sm font-semibold text-foreground">
+                {item.displayValue}
+              </p>
+            </div>
+
+            <div className="h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{ width: `${widthPercent}%` }}
+              />
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }

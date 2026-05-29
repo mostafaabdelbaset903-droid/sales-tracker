@@ -72,6 +72,80 @@ function getProductStatus(totalQuantity: number, daysWithoutSale: number) {
   return "Normal"
 }
 
+function normalizeText(value: string | null | undefined) {
+  return (value || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[\s-]+/g, "_")
+}
+
+function inferCategory(
+  category: string | null | undefined,
+  subCategory: string | null | undefined
+) {
+  const normalizedCategory = normalizeText(category)
+
+  if (
+    normalizedCategory &&
+    normalizedCategory !== "unknown" &&
+    normalizedCategory !== "null"
+  ) {
+    return category || "Unknown"
+  }
+
+  const normalizedSubCategory = normalizeText(subCategory)
+
+  if (
+    [
+      "refrigerator",
+      "fridge",
+      "microwave",
+      "dishwasher",
+      "built_in",
+      "builtin",
+      "built_in_oven",
+      "oven",
+    ].includes(normalizedSubCategory)
+  ) {
+    return "Kitchen"
+  }
+
+  if (
+    [
+      "washing_machine",
+      "washing",
+      "washer",
+      "dryer",
+      "vacuum",
+      "vacuum_cleaner",
+    ].includes(normalizedSubCategory)
+  ) {
+    return "Washing"
+  }
+
+  if (
+    ["tv", "television", "oled", "qned", "nano", "uhd", "av", "soundbar"].includes(
+      normalizedSubCategory
+    )
+  ) {
+    return "Entertainment"
+  }
+
+  if (
+    ["air_conditioning", "air_conditioner", "ac", "split_ac"].includes(
+      normalizedSubCategory
+    )
+  ) {
+    return "Air Conditioning"
+  }
+
+  if (["air_purifier", "purifier"].includes(normalizedSubCategory)) {
+    return "Air Purifier"
+  }
+
+  return "Unknown"
+}
+
 function getStatusClass(status: ProductPerformance["status"]) {
   if (status === "Fast") {
     return "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
@@ -85,8 +159,6 @@ function getStatusClass(status: ProductPerformance["status"]) {
 }
 
 export default function ProductPerformanceDashboard() {
-  const supabase = createClient()
-
   const [sales, setSales] = useState<JoinedSale[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -99,6 +171,8 @@ export default function ProductPerformanceDashboard() {
   useEffect(() => {
     async function fetchData() {
       setLoading(true)
+
+      const supabase = createClient()
 
       const { data: salesData, error: salesError } = await supabase
         .from("sales")
@@ -144,7 +218,7 @@ export default function ProductPerformanceDashboard() {
             extra_incentive: Number(sale.extra_incentive) || 0,
             model_id: sale.model_id || "unknown",
             model_name: model?.model_name || "Unknown Model",
-            category: model?.category || "Unknown",
+            category: inferCategory(model?.category, model?.sub_category),
             sub_category: model?.sub_category || "Unknown",
           }
         }
@@ -155,10 +229,13 @@ export default function ProductPerformanceDashboard() {
     }
 
     fetchData()
-  }, [supabase])
+  }, [])
 
   const categories = useMemo(() => {
-    return ["All", ...Array.from(new Set(sales.map((sale) => sale.category)))]
+    return [
+      "All",
+      ...Array.from(new Set(sales.map((sale) => sale.category))).sort(),
+    ]
   }, [sales])
 
   const subCategories = useMemo(() => {
@@ -169,14 +246,14 @@ export default function ProductPerformanceDashboard() {
 
     return [
       "All",
-      ...Array.from(new Set(filtered.map((sale) => sale.sub_category))),
+      ...Array.from(new Set(filtered.map((sale) => sale.sub_category))).sort(),
     ]
   }, [sales, selectedCategory])
 
   const salesPeople = useMemo(() => {
     return [
       "All",
-      ...Array.from(new Set(sales.map((sale) => sale.sales_person))),
+      ...Array.from(new Set(sales.map((sale) => sale.sales_person))).sort(),
     ]
   }, [sales])
 

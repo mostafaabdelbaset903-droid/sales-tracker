@@ -158,6 +158,24 @@ function getStatusClass(status: ProductPerformance["status"]) {
   return "border-yellow-300 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-300"
 }
 
+function getStatusLabel(status: ProductPerformance["status"]) {
+  if (status === "Fast") return "Fast Moving"
+  if (status === "Slow") return "Slow Moving"
+  return "Normal Moving"
+}
+
+function getStatusDescription(status: ProductPerformance["status"]) {
+  if (status === "Fast") {
+    return "Good sell-out movement. Sold in good quantity and recently."
+  }
+
+  if (status === "Slow") {
+    return "No recent sell-out. Last sale was 30 days ago or more."
+  }
+
+  return "Average sell-out movement. Needs normal follow-up."
+}
+
 export default function ProductPerformanceDashboard() {
   const [sales, setSales] = useState<JoinedSale[]>([])
   const [loading, setLoading] = useState(true)
@@ -471,6 +489,16 @@ export default function ProductPerformanceDashboard() {
         </div>
       </div>
 
+      <div className="rounded-xl border bg-card p-4">
+        <h2 className="mb-3 text-lg font-semibold">Status Guide</h2>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <StatusGuideItem status="Fast" />
+          <StatusGuideItem status="Normal" />
+          <StatusGuideItem status="Slow" />
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-4">
         <SummaryCard title="Total Value" value={formatCurrency(totalValue)} />
         <SummaryCard title="Total Quantity" value={String(totalQuantity)} />
@@ -530,6 +558,28 @@ function SummaryCard({ title, value }: { title: string; value: string }) {
   )
 }
 
+function StatusGuideItem({
+  status,
+}: {
+  status: ProductPerformance["status"]
+}) {
+  return (
+    <div className="rounded-lg border bg-background p-3">
+      <span
+        className={`inline-flex rounded-full border px-2 py-1 text-xs font-medium ${getStatusClass(
+          status
+        )}`}
+      >
+        {getStatusLabel(status)}
+      </span>
+
+      <p className="mt-2 text-sm text-muted-foreground">
+        {getStatusDescription(status)}
+      </p>
+    </div>
+  )
+}
+
 function ProductTable({ items }: { items: ProductPerformance[] }) {
   if (items.length === 0) {
     return (
@@ -584,7 +634,7 @@ function ProductTable({ items }: { items: ProductPerformance[] }) {
                       item.status
                     )}`}
                   >
-                    {item.status}
+                    {getStatusLabel(item.status)}
                   </span>
                 </td>
               </tr>
@@ -612,7 +662,7 @@ function ProductMobileCard({ item }: { item: ProductPerformance }) {
             item.status
           )}`}
         >
-          {item.status}
+          {getStatusLabel(item.status)}
         </span>
       </div>
 

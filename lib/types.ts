@@ -1,11 +1,12 @@
 // Sub-category types
-export type SubCategory = 
-  | 'washing_machine' 
-  | 'dryer' 
+export type SubCategory =
+  | 'washing_machine'
+  | 'dryer'
   | 'vacuum'
-  | 'refrigerator' 
-  | 'built_in' 
+  | 'refrigerator'
+  | 'built_in'
   | 'microwave'
+  | 'dishwasher'
   | 'air_conditioner'
   | 'air_purifier'
   | 'tv'
@@ -23,6 +24,7 @@ export const SUB_CATEGORY_TO_MAIN: Record<SubCategory, MainCategory> = {
   refrigerator: 'kitchen',
   built_in: 'kitchen',
   microwave: 'kitchen',
+  dishwasher: 'kitchen',
 
   air_conditioner: 'ac',
   air_purifier: 'ac',
@@ -40,6 +42,7 @@ export const SUB_CATEGORY_LABELS: Record<SubCategory, string> = {
   refrigerator: 'Refrigerator',
   built_in: 'Built-in',
   microwave: 'Microwave',
+  dishwasher: 'Dishwasher',
 
   air_conditioner: 'Air Conditioner',
   air_purifier: 'Air Purifier',
@@ -59,7 +62,7 @@ export const MAIN_CATEGORY_LABELS: Record<MainCategory, string> = {
 // Sub-categories grouped by main category
 export const SUB_CATEGORIES_BY_MAIN: Record<MainCategory, SubCategory[]> = {
   washing: ['washing_machine', 'dryer', 'vacuum'],
-  kitchen: ['refrigerator', 'built_in', 'microwave'],
+  kitchen: ['refrigerator', 'built_in', 'microwave', 'dishwasher'],
   ac: ['air_conditioner', 'air_purifier'],
   entertainment: ['tv', 'av'],
 };
@@ -73,6 +76,7 @@ export const ALL_SUB_CATEGORIES: SubCategory[] = [
   'refrigerator',
   'built_in',
   'microwave',
+  'dishwasher',
 
   'air_conditioner',
   'air_purifier',

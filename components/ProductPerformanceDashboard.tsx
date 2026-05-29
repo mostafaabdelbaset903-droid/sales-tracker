@@ -540,48 +540,105 @@ function ProductTable({ items }: { items: ProductPerformance[] }) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[900px] text-sm">
-        <thead>
-          <tr className="border-b text-left text-muted-foreground">
-            <th className="py-2 pr-4">Model</th>
-            <th className="py-2 pr-4">Category</th>
-            <th className="py-2 pr-4">Sub Category</th>
-            <th className="py-2 pr-4">Qty</th>
-            <th className="py-2 pr-4">Value</th>
-            <th className="py-2 pr-4">Share %</th>
-            <th className="py-2 pr-4">Last Sold</th>
-            <th className="py-2 pr-4">Days</th>
-            <th className="py-2 pr-4">Status</th>
-          </tr>
-        </thead>
+    <>
+      <div className="space-y-3 md:hidden">
+        {items.map((item) => (
+          <ProductMobileCard key={item.model_id} item={item} />
+        ))}
+      </div>
 
-        <tbody>
-          {items.map((item) => (
-            <tr key={item.model_id} className="border-b last:border-b-0">
-              <td className="py-2 pr-4 font-medium">{item.model_name}</td>
-              <td className="py-2 pr-4">{item.category}</td>
-              <td className="py-2 pr-4">{item.sub_category}</td>
-              <td className="py-2 pr-4">{item.total_quantity}</td>
-              <td className="py-2 pr-4">{formatCurrency(item.total_value)}</td>
-              <td className="py-2 pr-4">
-                {item.percentage_of_category.toFixed(1)}%
-              </td>
-              <td className="py-2 pr-4">{item.last_sold_date}</td>
-              <td className="py-2 pr-4">{item.days_without_sale}</td>
-              <td className="py-2 pr-4">
-                <span
-                  className={`rounded-full border px-2 py-1 text-xs font-medium ${getStatusClass(
-                    item.status
-                  )}`}
-                >
-                  {item.status}
-                </span>
-              </td>
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full min-w-[900px] text-sm">
+          <thead>
+            <tr className="border-b text-left text-muted-foreground">
+              <th className="py-2 pr-4">Model</th>
+              <th className="py-2 pr-4">Category</th>
+              <th className="py-2 pr-4">Sub Category</th>
+              <th className="py-2 pr-4">Qty</th>
+              <th className="py-2 pr-4">Value</th>
+              <th className="py-2 pr-4">Share %</th>
+              <th className="py-2 pr-4">Last Sold</th>
+              <th className="py-2 pr-4">Days</th>
+              <th className="py-2 pr-4">Status</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {items.map((item) => (
+              <tr key={item.model_id} className="border-b last:border-b-0">
+                <td className="py-2 pr-4 font-medium">{item.model_name}</td>
+                <td className="py-2 pr-4">{item.category}</td>
+                <td className="py-2 pr-4">{item.sub_category}</td>
+                <td className="py-2 pr-4">{item.total_quantity}</td>
+                <td className="py-2 pr-4">
+                  {formatCurrency(item.total_value)}
+                </td>
+                <td className="py-2 pr-4">
+                  {item.percentage_of_category.toFixed(1)}%
+                </td>
+                <td className="py-2 pr-4">{item.last_sold_date}</td>
+                <td className="py-2 pr-4">{item.days_without_sale}</td>
+                <td className="py-2 pr-4">
+                  <span
+                    className={`rounded-full border px-2 py-1 text-xs font-medium ${getStatusClass(
+                      item.status
+                    )}`}
+                  >
+                    {item.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )
+}
+
+function ProductMobileCard({ item }: { item: ProductPerformance }) {
+  return (
+    <div className="rounded-lg border bg-background p-3">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold text-foreground">{item.model_name}</p>
+          <p className="text-xs text-muted-foreground">
+            {item.category} / {item.sub_category}
+          </p>
+        </div>
+
+        <span
+          className={`shrink-0 rounded-full border px-2 py-1 text-xs font-medium ${getStatusClass(
+            item.status
+          )}`}
+        >
+          {item.status}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <MobileMetric label="Qty" value={String(item.total_quantity)} />
+        <MobileMetric label="Value" value={formatCurrency(item.total_value)} />
+        <MobileMetric
+          label="Share"
+          value={`${item.percentage_of_category.toFixed(1)}%`}
+        />
+        <MobileMetric label="Days" value={String(item.days_without_sale)} />
+        <MobileMetric label="Last Sold" value={item.last_sold_date} />
+        <MobileMetric
+          label="Extra Incentive"
+          value={formatCurrency(item.total_extra_incentive)}
+        />
+      </div>
+    </div>
+  )
+}
+
+function MobileMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="font-medium text-foreground">{value}</p>
     </div>
   )
 }

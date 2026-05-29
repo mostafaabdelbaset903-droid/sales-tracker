@@ -608,13 +608,28 @@ export default function ProductPerformanceDashboard() {
     totalValue
   )
 
-  const bestCategory = categoryDonutItems[0]
-  const weakestCategory = [...categoryDonutItems]
-    .filter((item) => item.value > 0)
-    .sort((a, b) => a.value - b.value)[0]
+  const revenueLeader = productPerformance[0]
+  const unitDriver = topThreeByQuantity[0]
 
-  const bestModel = productPerformance[0]
-  const weakestModel = bottomThreeByValue[0]
+  const pushOpportunity =
+    [...productPerformance]
+      .filter((item) => item.status === "Normal")
+      .filter((item) => item.model_id !== revenueLeader?.model_id)
+      .filter((item) => item.model_id !== unitDriver?.model_id)
+      .sort((a, b) => b.total_value - a.total_value)[0] ||
+    [...productPerformance]
+      .filter((item) => item.model_id !== revenueLeader?.model_id)
+      .filter((item) => item.model_id !== unitDriver?.model_id)
+      .sort((a, b) => b.total_value - a.total_value)[0] ||
+    productPerformance[1] ||
+    productPerformance[0]
+
+  const needsAttention = slowMoving[0] || bottomThreeByValue[0]
+
+  const directionScope =
+    selectedCategory === "All" ? "all categories" : selectedCategory
+
+  const showMainCategoryChart = selectedCategory === "All"
 
   if (loading) {
     return (
@@ -751,41 +766,62 @@ export default function ProductPerformanceDashboard() {
       </div>
 
       <SectionHeader
-        title="Executive Insights"
-        description="A quick management view of the strongest and weakest areas."
+        title="Sell-Out Direction"
+        description={`Smart action hints based on value, quantity, and movement in ${directionScope}.`}
       />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <InsightCard
-          title="Best Category"
-          value={bestCategory?.label || "No data"}
-          subtitle={bestCategory ? bestCategory.displayValue : "No sales found"}
+        <ActionDirectionCard
+          title="Revenue Leader"
+          value={revenueLeader?.model_name || "No data"}
+          metric={
+            revenueLeader
+              ? formatCurrency(revenueLeader.total_value)
+              : "No sales found"
+          }
+          action="Highest value contributor. Keep availability and display strong."
           icon={<Trophy className="h-5 w-5" />}
           tone="success"
         />
-        <InsightCard
-          title="Weakest Category"
-          value={weakestCategory?.label || "No data"}
-          subtitle={
-            weakestCategory ? weakestCategory.displayValue : "No sales found"
+
+        <ActionDirectionCard
+          title="Unit Driver"
+          value={unitDriver?.model_name || "No data"}
+          metric={
+            unitDriver ? `${unitDriver.total_quantity} units sold` : "No sales found"
           }
+          action="Highest quantity mover. Good item for volume and traffic."
           icon={<Target className="h-5 w-5" />}
-          tone="warning"
-        />
-        <InsightCard
-          title="Top Model"
-          value={bestModel?.model_name || "No data"}
-          subtitle={bestModel ? formatCurrency(bestModel.total_value) : "No sales"}
-          icon={<PackageSearch className="h-5 w-5" />}
           tone="info"
         />
-        <InsightCard
-          title="Needs Push"
-          value={weakestModel?.model_name || "No data"}
-          subtitle={
+
+        <ActionDirectionCard
+          title="Push Opportunity"
+          value={pushOpportunity?.model_name || "No data"}
+          metric={
+            pushOpportunity
+              ? `${formatCurrency(pushOpportunity.total_value)} • ${pushOpportunity.status}`
+              : "No opportunity found"
+          }
+          action="Already moving. More focus may increase total sales value."
+          icon={<PackageSearch className="h-5 w-5" />}
+          tone="warning"
+        />
+
+        <ActionDirectionCard
+          title="Needs Attention"
+          value={needsAttention?.model_name || "No data"}
+          metric={
+            needsAttention
+              ? slowMoving.length > 0
+                ? `${needsAttention.days_without_sale} days without sale`
+                : `${formatCurrency(needsAttention.total_value)} low value`
+              : "No issue found"
+          }
+          action={
             slowMoving.length > 0
-              ? `${slowMoving.length} slow moving items`
-              : "No slow moving items"
+              ? "Slow movement. Review display, pricing, or availability."
+              : "Lowest value contributor. Check if it needs promotion or follow-up."
           }
           icon={<AlertTriangle className="h-5 w-5" />}
           tone="danger"
@@ -794,20 +830,34 @@ export default function ProductPerformanceDashboard() {
 
       <SectionHeader
         title="Visual Insights"
-        description="Different chart styles for share, contribution, and product ranking."
+        description="Charts that show contribution, mix, and product ranking."
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <DonutChartCard
-          title="Category Value Share"
-          description="Value split across main categories."
-          items={categoryDonutItems}
-          totalDisplay={formatCurrency(totalValue)}
-        />
+      <div
+        className={`grid gap-4 ${
+          showMainCategoryChart ? "lg:grid-cols-2" : "lg:grid-cols-1"
+        }`}
+      >
+        {showMainCategoryChart && (
+          <DonutChartCard
+            title="Main Category Contribution"
+            description="Shows which main category contributes most to total sell-out value."
+            items={categoryDonutItems}
+            totalDisplay={formatCurrency(totalValue)}
+          />
+        )}
 
         <DonutChartCard
-          title="Sub Category Mix"
-          description="Top sub-categories by sell-out value."
+          title={
+            selectedCategory === "All"
+              ? "Sub Category Mix"
+              : `${selectedCategory} Mix`
+          }
+          description={
+            selectedCategory === "All"
+              ? "Top sub-categories by sell-out value."
+              : `Value split inside ${selectedCategory}.`
+          }
           items={subCategoryDonutItems}
           totalDisplay={formatCurrency(totalValue)}
         />
@@ -975,16 +1025,18 @@ function SummaryCard({
   )
 }
 
-function InsightCard({
+function ActionDirectionCard({
   title,
   value,
-  subtitle,
+  metric,
+  action,
   icon,
   tone,
 }: {
   title: string
   value: string
-  subtitle: string
+  metric: string
+  action: string
   icon: ReactNode
   tone: "success" | "warning" | "info" | "danger"
 }) {
@@ -1000,13 +1052,16 @@ function InsightCard({
 
   return (
     <div className={`rounded-2xl border p-4 shadow-sm ${styles[tone]}`}>
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-medium opacity-80">{title}</p>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold opacity-80">{title}</p>
         <div className="rounded-xl bg-background/70 p-2">{icon}</div>
       </div>
 
       <p className="truncate text-xl font-bold text-foreground">{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
+      <p className="mt-1 text-sm font-medium text-foreground">{metric}</p>
+      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+        {action}
+      </p>
     </div>
   )
 }

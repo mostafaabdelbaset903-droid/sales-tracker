@@ -1,7 +1,15 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, type ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
+import {
+  BarChart3,
+  Boxes,
+  Gift,
+  PackageSearch,
+  TrendingUp,
+  Wallet,
+} from "lucide-react"
 
 type SaleRow = {
   id: string
@@ -54,6 +62,9 @@ type ChartItem = {
   displayValue: string
   secondaryText?: string
 }
+
+type ChartVariant = "value" | "quantity" | "contribution"
+type SummaryVariant = "value" | "quantity" | "models" | "incentive"
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-EG", {
@@ -188,6 +199,61 @@ function getStatusDescription(status: ProductPerformance["status"]) {
   }
 
   return "Average sell-out movement. Needs normal follow-up."
+}
+
+function getSummaryCardStyle(variant: SummaryVariant) {
+  if (variant === "value") {
+    return {
+      card: "border-cyan-200 bg-gradient-to-br from-cyan-50 via-sky-50 to-blue-100 dark:border-cyan-900/60 dark:from-cyan-950/40 dark:via-sky-950/30 dark:to-blue-950/40",
+      icon: "bg-cyan-500/15 text-cyan-700 dark:text-cyan-300",
+    }
+  }
+
+  if (variant === "quantity") {
+    return {
+      card: "border-blue-200 bg-gradient-to-br from-blue-50 via-indigo-50 to-sky-100 dark:border-blue-900/60 dark:from-blue-950/40 dark:via-indigo-950/30 dark:to-sky-950/40",
+      icon: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
+    }
+  }
+
+  if (variant === "models") {
+    return {
+      card: "border-violet-200 bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-100 dark:border-violet-900/60 dark:from-violet-950/40 dark:via-purple-950/30 dark:to-fuchsia-950/40",
+      icon: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
+    }
+  }
+
+  return {
+    card: "border-emerald-200 bg-gradient-to-br from-emerald-50 via-teal-50 to-green-100 dark:border-emerald-900/60 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-green-950/40",
+    icon: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  }
+}
+
+function getChartAccent(variant: ChartVariant) {
+  if (variant === "quantity") {
+    return {
+      bar: "bg-gradient-to-r from-indigo-500 via-blue-500 to-sky-400",
+      badge:
+        "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950 dark:text-indigo-300",
+      glow: "from-indigo-500/10 via-blue-500/5 to-transparent",
+    }
+  }
+
+  if (variant === "contribution") {
+    return {
+      bar: "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-400",
+      badge:
+        "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300",
+      glow: "from-emerald-500/10 via-teal-500/5 to-transparent",
+    }
+  }
+
+  return {
+    bar: "bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-500",
+    badge:
+      "border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950 dark:text-cyan-300",
+    glow: "from-cyan-500/10 via-sky-500/5 to-transparent",
+  }
 }
 
 export default function ProductPerformanceDashboard() {
@@ -471,14 +537,28 @@ export default function ProductPerformanceDashboard() {
 
   return (
     <div className="space-y-6 p-4 text-foreground md:p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Product Performance</h1>
-        <p className="text-sm text-muted-foreground">
-          Track sell-out by model, category, value, quantity, and last sold date.
-        </p>
+      <div className="rounded-2xl border bg-gradient-to-br from-card via-card to-muted/40 p-5">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm font-medium text-primary">
+              Sell-Out Analytics
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Product Performance
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Track sell-out by model, category, value, quantity, and last sold
+              date.
+            </p>
+          </div>
+
+          <div className="rounded-full border bg-background/80 px-3 py-1 text-xs text-muted-foreground">
+            Live data from Supabase
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-4 rounded-xl border bg-card p-4 md:grid-cols-5">
+      <div className="grid gap-4 rounded-2xl border bg-card/90 p-4 shadow-sm md:grid-cols-5">
         <div>
           <label className="text-sm font-medium">Category</label>
           <select
@@ -487,7 +567,7 @@ export default function ProductPerformanceDashboard() {
               setSelectedCategory(e.target.value)
               setSelectedSubCategory("All")
             }}
-            className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground"
+            className="mt-1 w-full rounded-xl border bg-background px-3 py-2 text-sm text-foreground"
           >
             {categories.map((category) => (
               <option key={category} value={category}>
@@ -502,7 +582,7 @@ export default function ProductPerformanceDashboard() {
           <select
             value={selectedSubCategory}
             onChange={(e) => setSelectedSubCategory(e.target.value)}
-            className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground"
+            className="mt-1 w-full rounded-xl border bg-background px-3 py-2 text-sm text-foreground"
           >
             {subCategories.map((subCategory) => (
               <option key={subCategory} value={subCategory}>
@@ -517,7 +597,7 @@ export default function ProductPerformanceDashboard() {
           <select
             value={selectedSalesPerson}
             onChange={(e) => setSelectedSalesPerson(e.target.value)}
-            className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground"
+            className="mt-1 w-full rounded-xl border bg-background px-3 py-2 text-sm text-foreground"
           >
             {salesPeople.map((person) => (
               <option key={person} value={person}>
@@ -533,7 +613,7 @@ export default function ProductPerformanceDashboard() {
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground"
+            className="mt-1 w-full rounded-xl border bg-background px-3 py-2 text-sm text-foreground"
           />
         </div>
 
@@ -543,13 +623,78 @@ export default function ProductPerformanceDashboard() {
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="mt-1 w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground"
+            className="mt-1 w-full rounded-xl border bg-background px-3 py-2 text-sm text-foreground"
           />
         </div>
       </div>
 
-      <div className="rounded-xl border bg-card p-4">
-        <h2 className="mb-3 text-lg font-semibold">Status Guide</h2>
+      <div className="grid gap-4 md:grid-cols-4">
+        <SummaryCard
+          title="Total Value"
+          value={formatCurrency(totalValue)}
+          subtitle="Sales value in selected filters"
+          variant="value"
+          icon={<Wallet className="h-5 w-5" />}
+        />
+        <SummaryCard
+          title="Total Quantity"
+          value={String(totalQuantity)}
+          subtitle="Total units sold"
+          variant="quantity"
+          icon={<Boxes className="h-5 w-5" />}
+        />
+        <SummaryCard
+          title="Models Sold"
+          value={String(productPerformance.length)}
+          subtitle="Active models in this view"
+          variant="models"
+          icon={<PackageSearch className="h-5 w-5" />}
+        />
+        <SummaryCard
+          title="Extra Incentive"
+          value={formatCurrency(totalExtraIncentive)}
+          subtitle="Extra incentive from sales"
+          variant="incentive"
+          icon={<Gift className="h-5 w-5" />}
+        />
+      </div>
+
+      <SectionHeader
+        title="Visual Insights"
+        description="Quick view of the strongest models and category contribution."
+      />
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <ChartCard
+          title="Top 5 Models by Value"
+          description="Highest selling models by EGP value."
+          variant="value"
+        >
+          <SimpleBarChart items={topFiveValueChart} variant="value" />
+        </ChartCard>
+
+        <ChartCard
+          title="Top 5 Models by Quantity"
+          description="Highest selling models by units sold."
+          variant="quantity"
+        >
+          <SimpleBarChart items={topFiveQuantityChart} variant="quantity" />
+        </ChartCard>
+
+        <ChartCard
+          title="Sub Category Contribution"
+          description="Value share by sub category."
+          variant="contribution"
+        >
+          <SimpleBarChart items={subCategoryChart} variant="contribution" />
+        </ChartCard>
+      </div>
+
+      <div className="rounded-2xl border bg-card/90 p-4 shadow-sm">
+        <div className="mb-3 flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Status Guide</h2>
+        </div>
 
         <div className="grid gap-3 md:grid-cols-3">
           <StatusGuideItem status="Fast" />
@@ -558,67 +703,30 @@ export default function ProductPerformanceDashboard() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <SummaryCard title="Total Value" value={formatCurrency(totalValue)} />
-        <SummaryCard title="Total Quantity" value={String(totalQuantity)} />
-        <SummaryCard
-          title="Models Sold"
-          value={String(productPerformance.length)}
-        />
-        <SummaryCard
-          title="Extra Incentive"
-          value={formatCurrency(totalExtraIncentive)}
-        />
-      </div>
+      <SectionHeader
+        title="Top & Bottom Products"
+        description="Focused tables for fastest and weakest selling models."
+      />
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <ChartCard
-          title="Top 5 Models by Value"
-          description="Highest selling models by EGP value."
-        >
-          <SimpleBarChart items={topFiveValueChart} />
-        </ChartCard>
-
-        <ChartCard
-          title="Top 5 Models by Quantity"
-          description="Highest selling models by units sold."
-        >
-          <SimpleBarChart items={topFiveQuantityChart} />
-        </ChartCard>
-
-        <ChartCard
-          title="Sub Category Contribution"
-          description="Value share by sub category."
-        >
-          <SimpleBarChart items={subCategoryChart} />
-        </ChartCard>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border bg-card p-4">
-          <h2 className="mb-4 text-lg font-semibold">Top 3 by Value</h2>
+        <DataPanel title="Top 3 by Value">
           <ProductTable items={topThreeByValue} />
-        </div>
+        </DataPanel>
 
-        <div className="rounded-xl border bg-card p-4">
-          <h2 className="mb-4 text-lg font-semibold">Top 3 by Quantity</h2>
+        <DataPanel title="Top 3 by Quantity">
           <ProductTable items={topThreeByQuantity} />
-        </div>
+        </DataPanel>
 
-        <div className="rounded-xl border bg-card p-4">
-          <h2 className="mb-4 text-lg font-semibold">Bottom 3 by Value</h2>
+        <DataPanel title="Bottom 3 by Value">
           <ProductTable items={bottomThreeByValue} />
-        </div>
+        </DataPanel>
       </div>
 
-      <div className="rounded-xl border bg-card p-4">
-        <h2 className="mb-4 text-lg font-semibold">All Product Performance</h2>
+      <DataPanel title="All Product Performance">
         <ProductTable items={productPerformance} />
-      </div>
+      </DataPanel>
 
-      <div className="rounded-xl border bg-card p-4">
-        <h2 className="mb-4 text-lg font-semibold">Slow Moving Items</h2>
-
+      <DataPanel title="Slow Moving Items">
         {slowMoving.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No slow moving items found for the selected filters.
@@ -626,16 +734,55 @@ export default function ProductPerformanceDashboard() {
         ) : (
           <ProductTable items={slowMoving} />
         )}
-      </div>
+      </DataPanel>
     </div>
   )
 }
 
-function SummaryCard({ title, value }: { title: string; value: string }) {
+function SectionHeader({
+  title,
+  description,
+}: {
+  title: string
+  description: string
+}) {
   return (
-    <div className="rounded-xl border bg-card p-4">
-      <p className="text-sm text-muted-foreground">{title}</p>
-      <p className="mt-1 text-xl font-bold">{value}</p>
+    <div>
+      <h2 className="text-xl font-bold tracking-tight">{title}</h2>
+      <p className="text-sm text-muted-foreground">{description}</p>
+    </div>
+  )
+}
+
+function SummaryCard({
+  title,
+  value,
+  subtitle,
+  variant,
+  icon,
+}: {
+  title: string
+  value: string
+  subtitle: string
+  variant: SummaryVariant
+  icon: ReactNode
+}) {
+  const style = getSummaryCardStyle(variant)
+
+  return (
+    <div className={`rounded-2xl border p-4 shadow-sm ${style.card}`}>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+            {value}
+          </p>
+        </div>
+
+        <div className={`rounded-2xl p-2 ${style.icon}`}>{icon}</div>
+      </div>
+
+      <p className="text-xs text-muted-foreground">{subtitle}</p>
     </div>
   )
 }
@@ -643,23 +790,49 @@ function SummaryCard({ title, value }: { title: string; value: string }) {
 function ChartCard({
   title,
   description,
+  variant,
   children,
 }: {
   title: string
   description: string
-  children: React.ReactNode
+  variant: ChartVariant
+  children: ReactNode
 }) {
+  const accent = getChartAccent(variant)
+
   return (
-    <div className="rounded-xl border bg-card p-4">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="mb-4 text-sm text-muted-foreground">{description}</p>
-      {children}
+    <div className="relative overflow-hidden rounded-2xl border bg-card p-4 shadow-sm">
+      <div
+        className={`pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-br ${accent.glow}`}
+      />
+
+      <div className="relative">
+        <div className="mb-4 flex items-start gap-3">
+          <div className={`rounded-2xl border p-2 ${accent.badge}`}>
+            <BarChart3 className="h-4 w-4" />
+          </div>
+
+          <div>
+            <h2 className="text-lg font-semibold">{title}</h2>
+            <p className="text-sm text-muted-foreground">{description}</p>
+          </div>
+        </div>
+
+        {children}
+      </div>
     </div>
   )
 }
 
-function SimpleBarChart({ items }: { items: ChartItem[] }) {
+function SimpleBarChart({
+  items,
+  variant,
+}: {
+  items: ChartItem[]
+  variant: ChartVariant
+}) {
   const maxValue = Math.max(...items.map((item) => item.value), 0)
+  const accent = getChartAccent(variant)
 
   if (items.length === 0 || maxValue === 0) {
     return (
@@ -671,32 +844,40 @@ function SimpleBarChart({ items }: { items: ChartItem[] }) {
 
   return (
     <div className="space-y-4">
-      {items.map((item) => {
+      {items.map((item, index) => {
         const widthPercent =
           maxValue > 0 ? Math.max((item.value / maxValue) * 100, 3) : 0
 
         return (
-          <div key={item.label} className="space-y-1">
+          <div key={`${item.label}-${index}`} className="space-y-2">
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {item.label}
-                </p>
-                {item.secondaryText && (
-                  <p className="truncate text-xs text-muted-foreground">
-                    {item.secondaryText}
+              <div className="flex min-w-0 items-start gap-2">
+                <span
+                  className={`mt-0.5 shrink-0 rounded-full border px-2 py-0.5 text-xs font-semibold ${accent.badge}`}
+                >
+                  #{index + 1}
+                </span>
+
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {item.label}
                   </p>
-                )}
+                  {item.secondaryText && (
+                    <p className="truncate text-xs text-muted-foreground">
+                      {item.secondaryText}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <p className="shrink-0 text-sm font-semibold text-foreground">
+              <p className="shrink-0 text-sm font-bold text-foreground">
                 {item.displayValue}
               </p>
             </div>
 
-            <div className="h-2 overflow-hidden rounded-full bg-muted">
+            <div className="h-2.5 overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-primary"
+                className={`h-full rounded-full ${accent.bar}`}
                 style={{ width: `${widthPercent}%` }}
               />
             </div>
@@ -713,7 +894,7 @@ function StatusGuideItem({
   status: ProductPerformance["status"]
 }) {
   return (
-    <div className="rounded-lg border bg-background p-3">
+    <div className="rounded-xl border bg-background/70 p-3">
       <span
         className={`inline-flex rounded-full border px-2 py-1 text-xs font-medium ${getStatusClass(
           status
@@ -725,6 +906,21 @@ function StatusGuideItem({
       <p className="mt-2 text-sm text-muted-foreground">
         {getStatusDescription(status)}
       </p>
+    </div>
+  )
+}
+
+function DataPanel({
+  title,
+  children,
+}: {
+  title: string
+  children: ReactNode
+}) {
+  return (
+    <div className="rounded-2xl border bg-card p-4 shadow-sm">
+      <h2 className="mb-4 text-lg font-semibold">{title}</h2>
+      {children}
     </div>
   )
 }
@@ -797,7 +993,7 @@ function ProductTable({ items }: { items: ProductPerformance[] }) {
 
 function ProductMobileCard({ item }: { item: ProductPerformance }) {
   return (
-    <div className="rounded-lg border bg-background p-3">
+    <div className="rounded-xl border bg-background/80 p-3">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-foreground">{item.model_name}</p>

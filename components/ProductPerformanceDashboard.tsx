@@ -307,12 +307,16 @@ export default function ProductPerformanceDashboard() {
         (sale) => {
           const model = sale.model_id ? modelsMap.get(sale.model_id) : null
 
+          const quantity = Number(sale.quantity) || 0
+          const unitSellingValue = Number(sale.selling_value) || 0
+          const totalSellingValue = unitSellingValue * quantity
+
           return {
             id: sale.id,
             sale_date: sale.sale_date || sale.date || "",
             sales_person: sale.sales_person || "Unknown",
-            quantity: Number(sale.quantity) || 0,
-            selling_value: Number(sale.selling_value) || 0,
+            quantity,
+            selling_value: totalSellingValue,
             extra_incentive: Number(sale.extra_incentive) || 0,
             model_id: sale.model_id || "unknown",
             model_name: model?.model_name || "Unknown Model",

@@ -37,6 +37,7 @@ type ModelRow = {
   model_name: string | null
   category: string | null
   sub_category: string | null
+  extra_incentive: number | null
 }
 
 type JoinedSale = {
@@ -334,7 +335,7 @@ export default function ProductPerformanceDashboard() {
 
       const { data: modelsData, error: modelsError } = await supabase
         .from("models")
-        .select("id, model_name, category, sub_category")
+        .select("id, model_name, category, sub_category, extra_incentive")
 
       if (modelsError) {
         console.error("Error loading models:", modelsError)
@@ -357,13 +358,16 @@ export default function ProductPerformanceDashboard() {
           const unitSellingValue = Number(sale.selling_value) || 0
           const totalSellingValue = unitSellingValue * quantity
 
+          const unitModelExtraIncentive = Number(model?.extra_incentive) || 0
+          const totalExtraIncentive = unitModelExtraIncentive * quantity
+
           return {
             id: sale.id,
             sale_date: sale.sale_date || sale.date || "",
             sales_person: sale.sales_person || "Unknown",
             quantity,
             selling_value: totalSellingValue,
-            extra_incentive: Number(sale.extra_incentive) || 0,
+            extra_incentive: totalExtraIncentive,
             model_id: sale.model_id || "unknown",
             model_name: model?.model_name || "Unknown Model",
             category: inferCategory(model?.category, model?.sub_category),

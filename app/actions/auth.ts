@@ -22,7 +22,9 @@ export async function loginAction(formData: FormData) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: 60 * 60 * 24 * 30,
+
+    // 3 Hours Session
+    maxAge: 60 * 60 * 3,
   });
 
   redirect("/");

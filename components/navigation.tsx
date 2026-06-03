@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { logoutAction } from "@/app/actions/auth";
 import {
   LayoutDashboard,
   BarChart3,
@@ -13,6 +14,7 @@ import {
   Upload,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -31,22 +33,28 @@ export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-card border-b border-border">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">
+    <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+      <div className="mx-auto max-w-7xl px-4">
+        <div className="flex h-16 items-center justify-between gap-3">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-sm">
+              <span className="text-sm font-black text-primary-foreground">
                 ST
               </span>
             </div>
-            <span className="font-semibold text-foreground hidden sm:block">
-              Sales Tracker
-            </span>
+
+            <div className="hidden sm:block">
+              <span className="block text-sm font-bold leading-none text-foreground">
+                Sales Tracker
+              </span>
+              <span className="mt-1 block text-xs text-muted-foreground">
+                Commission Dashboard
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden items-center gap-1 md:flex">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -56,36 +64,48 @@ export function Navigation() {
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-colors",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   )}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="h-4 w-4" />
                   {item.label}
                 </Link>
               );
             })}
           </nav>
 
+          {/* Desktop Logout */}
+          <form action={logoutAction} className="hidden md:block">
+            <button
+              type="submit"
+              className="flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-600 dark:hover:border-red-900 dark:hover:bg-red-950 dark:hover:text-red-300"
+              title="Logout"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
+          </form>
+
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-accent text-foreground"
+            className="rounded-xl p-2 text-foreground hover:bg-accent md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? (
-              <X className="w-5 h-5" />
+              <X className="h-5 w-5" />
             ) : (
-              <Menu className="w-5 h-5" />
+              <Menu className="h-5 w-5" />
             )}
           </button>
         </div>
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <nav className="md:hidden py-4 border-t border-border">
+          <nav className="border-t border-border py-4 md:hidden">
             <div className="flex flex-col gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
@@ -97,17 +117,27 @@ export function Navigation() {
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+                      "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors",
                       isActive
                         ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     )}
                   >
-                    <Icon className="w-5 h-5" />
+                    <Icon className="h-5 w-5" />
                     {item.label}
                   </Link>
                 );
               })}
+
+              <form action={logoutAction} className="pt-2">
+                <button
+                  type="submit"
+                  className="flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-left text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950"
+                >
+                  <LogOut className="h-5 w-5" />
+                  Logout
+                </button>
+              </form>
             </div>
           </nav>
         )}

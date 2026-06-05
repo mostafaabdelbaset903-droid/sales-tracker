@@ -25,6 +25,17 @@ interface DashboardContentProps {
   settings: Settings;
 }
 
+const VALUE_BASED_BONUS_TIERS = [
+  { percent: 80, bonus: "62.5%", color: "text-amber-500" },
+  { percent: 90, bonus: "81.25%", color: "text-blue-500" },
+  { percent: 100, bonus: "100%", color: "text-emerald-500" },
+  { percent: 106, bonus: "118.75%", color: "text-emerald-500" },
+  { percent: 111, bonus: "137.5%", color: "text-emerald-500" },
+  { percent: 116, bonus: "156.25%", color: "text-emerald-500" },
+  { percent: 121, bonus: "175%", color: "text-emerald-500" },
+  { percent: 131, bonus: "193.75%", color: "text-emerald-500" },
+];
+
 export function DashboardContent({ sales, settings }: DashboardContentProps) {
   const data = calculateDashboardData(sales, settings);
   const currentMonth = new Date().toLocaleDateString("en-US", {
@@ -34,37 +45,18 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
         <p className="text-muted-foreground mt-1">{currentMonth} Performance</p>
       </div>
 
-      {/* Category Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <CategoryCard
-          stats={data.washing}
-          icon={WashingMachine}
-          color="bg-blue-500"
-        />
-        <CategoryCard
-          stats={data.kitchen}
-          icon={UtensilsCrossed}
-          color="bg-emerald-500"
-        />
-        <CategoryCard
-          stats={data.entertainment}
-          icon={Tv}
-          color="bg-purple-500"
-        />
-        <CategoryCard
-          stats={data.ac}
-          icon={Wind}
-          color="bg-cyan-500"
-        />
+        <CategoryCard stats={data.washing} icon={WashingMachine} color="bg-blue-500" />
+        <CategoryCard stats={data.kitchen} icon={UtensilsCrossed} color="bg-emerald-500" />
+        <CategoryCard stats={data.entertainment} icon={Tv} color="bg-purple-500" />
+        <CategoryCard stats={data.ac} icon={Wind} color="bg-cyan-500" />
       </div>
 
-      {/* Earnings Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <SummaryCard
           title="Washing Bonus"
@@ -96,7 +88,6 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
         />
       </div>
 
-      {/* Grand Total */}
       <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -110,15 +101,17 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
               {formatCurrency(data.grandTotal)}
             </div>
             <div className="text-sm text-muted-foreground mt-1">
-              {formatCurrency(data.totalBonus)} bonus + {formatCurrency(data.totalExtraIncentive)} incentives
+              {formatCurrency(data.totalBonus)} bonus +{" "}
+              {formatCurrency(data.totalExtraIncentive)} incentives
             </div>
           </div>
         </div>
       </div>
 
-      {/* Detailed Breakdown */}
       <div className="bg-card rounded-xl border border-border p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-foreground mb-4">Earnings Breakdown</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">
+          Earnings Breakdown
+        </h2>
         <div className="space-y-3">
           <BreakdownRow
             label="Washing Bonus"
@@ -135,22 +128,14 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
             value={data.entertainment.bonusEarned}
             tier={getBonusTier(data.entertainment.achievement)}
           />
-          <BreakdownRow
-            label="Washing Incentives"
-            value={data.washing.extraIncentive}
-          />
-          <BreakdownRow
-            label="Kitchen Incentives"
-            value={data.kitchen.extraIncentive}
-          />
+          <BreakdownRow label="Washing Incentives" value={data.washing.extraIncentive} />
+          <BreakdownRow label="Kitchen Incentives" value={data.kitchen.extraIncentive} />
           <BreakdownRow
             label="Entertainment Incentives"
             value={data.entertainment.extraIncentive}
           />
-          <BreakdownRow
-            label="AC Incentives"
-            value={data.ac.extraIncentive}
-          />
+          <BreakdownRow label="AC Incentives" value={data.ac.extraIncentive} />
+
           <div className="border-t border-border pt-3 mt-3">
             <div className="flex items-center justify-between">
               <span className="font-semibold text-foreground">Grand Total</span>
@@ -174,10 +159,6 @@ interface CategoryCardProps {
 function CategoryCard({ stats, icon: Icon, color }: CategoryCardProps) {
   const [expanded, setExpanded] = useState(false);
 
-  const remaining80 = calculateRemaining(stats.total, stats.target, 80);
-  const remaining90 = calculateRemaining(stats.total, stats.target, 90);
-  const remaining100 = calculateRemaining(stats.total, stats.target, 100);
-
   const progressPercent =
     stats.target > 0 ? Math.min((stats.total / stats.target) * 100, 100) : 0;
 
@@ -189,6 +170,10 @@ function CategoryCard({ stats, icon: Icon, color }: CategoryCardProps) {
       : stats.achievement >= 80
       ? "bg-amber-500"
       : "bg-red-400";
+
+  const remainingTiers = VALUE_BASED_BONUS_TIERS.filter(
+    tier => stats.achievement < tier.percent
+  );
 
   return (
     <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
@@ -204,6 +189,7 @@ function CategoryCard({ stats, icon: Icon, color }: CategoryCardProps) {
             </p>
           </div>
         </div>
+
         <button
           onClick={() => setExpanded(!expanded)}
           className="p-1 hover:bg-accent rounded-md transition-colors"
@@ -216,7 +202,6 @@ function CategoryCard({ stats, icon: Icon, color }: CategoryCardProps) {
         </button>
       </div>
 
-      {/* Main Stats */}
       <div className="space-y-3">
         <div className="flex items-end justify-between">
           <div>
@@ -226,26 +211,29 @@ function CategoryCard({ stats, icon: Icon, color }: CategoryCardProps) {
                 : `${stats.total} units`}
             </p>
             <p className="text-sm text-muted-foreground">
-              of {stats.isValueBased
+              of{" "}
+              {stats.isValueBased
                 ? formatCurrency(stats.target)
                 : `${stats.target} units`}
             </p>
           </div>
+
           <div className="text-right">
-            <p className={`text-xl font-bold ${
-              stats.achievement >= 100
-                ? "text-emerald-500"
-                : stats.achievement >= 80
-                ? "text-amber-500"
-                : "text-red-500"
-            }`}>
+            <p
+              className={`text-xl font-bold ${
+                stats.achievement >= 100
+                  ? "text-emerald-500"
+                  : stats.achievement >= 80
+                  ? "text-amber-500"
+                  : "text-red-500"
+              }`}
+            >
               {formatPercentage(stats.achievement)}
             </p>
             <p className="text-xs text-muted-foreground">Achievement</p>
           </div>
         </div>
 
-        {/* Progress Bar */}
         <div className="space-y-1">
           <div className="h-2.5 bg-muted rounded-full overflow-hidden">
             <div
@@ -253,6 +241,7 @@ function CategoryCard({ stats, icon: Icon, color }: CategoryCardProps) {
               style={{ width: `${progressPercent}%` }}
             />
           </div>
+
           <div className="flex justify-between text-[10px] text-muted-foreground">
             <span>0%</span>
             <span className="text-amber-500">80%</span>
@@ -261,7 +250,6 @@ function CategoryCard({ stats, icon: Icon, color }: CategoryCardProps) {
           </div>
         </div>
 
-        {/* Bonus Earned */}
         {stats.isValueBased && (
           <div className="flex items-center justify-between pt-2 border-t border-border">
             <span className="text-sm text-muted-foreground">Bonus Earned</span>
@@ -274,41 +262,30 @@ function CategoryCard({ stats, icon: Icon, color }: CategoryCardProps) {
           </div>
         )}
 
-        {/* Expanded Section - Remaining Amounts */}
         {expanded && stats.isValueBased && (
           <div className="pt-3 border-t border-border space-y-2 text-sm">
-            <p className="font-medium text-foreground mb-2">Remaining to reach:</p>
-            {stats.achievement < 80 && (
-              <RemainingRow
-                percent="80%"
-                amount={remaining80}
-                bonus="60%"
-                color="text-amber-500"
-              />
-            )}
-            {stats.achievement < 90 && (
-              <RemainingRow
-                percent="90%"
-                amount={remaining90}
-                bonus="70%"
-                color="text-blue-500"
-              />
-            )}
-            {stats.achievement < 100 && (
-              <RemainingRow
-                percent="100%"
-                amount={remaining100}
-                bonus="100%"
-                color="text-emerald-500"
-              />
-            )}
-            {stats.achievement >= 100 && (
-              <p className="text-emerald-500 font-medium">Target achieved! Full bonus earned.</p>
+            <p className="font-medium text-foreground mb-2">
+              Remaining to reach:
+            </p>
+
+            {remainingTiers.length > 0 ? (
+              remainingTiers.map(tier => (
+                <RemainingRow
+                  key={tier.percent}
+                  percent={`${tier.percent}%`}
+                  amount={calculateRemaining(stats.total, stats.target, tier.percent)}
+                  bonus={tier.bonus}
+                  color={tier.color}
+                />
+              ))
+            ) : (
+              <p className="text-emerald-500 font-medium">
+                Highest tier achieved! Maximum bonus earned.
+              </p>
             )}
           </div>
         )}
 
-        {/* Extra Incentive */}
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <span className="text-sm text-muted-foreground">Extra Incentive</span>
           <span className="font-semibold text-amber-600">
@@ -347,7 +324,13 @@ interface SummaryCardProps {
   color: string;
 }
 
-function SummaryCard({ title, value, subtitle, icon: Icon, color }: SummaryCardProps) {
+function SummaryCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  color,
+}: SummaryCardProps) {
   return (
     <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
       <div className="flex items-center gap-3 mb-3">
@@ -371,8 +354,12 @@ function BreakdownRow({ label, value, tier }: BreakdownRowProps) {
     <div className="flex items-center justify-between py-2 border-b border-border last:border-0">
       <span className="text-muted-foreground">{label}</span>
       <div className="text-right">
-        <span className="font-medium text-foreground">{formatCurrency(value)}</span>
-        {tier && <span className="text-xs text-muted-foreground ml-1">({tier})</span>}
+        <span className="font-medium text-foreground">
+          {formatCurrency(value)}
+        </span>
+        {tier && (
+          <span className="text-xs text-muted-foreground ml-1">({tier})</span>
+        )}
       </div>
     </div>
   );

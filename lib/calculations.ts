@@ -4,21 +4,35 @@ import { SUB_CATEGORY_TO_MAIN, MAIN_CATEGORY_LABELS } from './types';
 /**
  * Calculate bonus based on achievement percentage
  * Rules for Washing, Kitchen, and Entertainment:
+ * Full Bonus value is treated as the 100% tier value.
+ *
+ * New tiers:
+ * - >= 131%: 193.75% of bonus
+ * - >= 121%: 175% of bonus
+ * - >= 116%: 156.25% of bonus
+ * - >= 111%: 137.5% of bonus
+ * - >= 106%: 118.75% of bonus
  * - >= 100%: 100% of bonus
- * - >= 90%: 70% of bonus
- * - >= 80%: 60% of bonus
+ * - >= 90%: 81.25% of bonus
+ * - >= 80%: 62.5% of bonus
  * - < 80%: 0
  */
 export function calculateBonusMultiplier(achievement: number): number {
+  if (achievement >= 131) return 15500 / 8000;
+  if (achievement >= 121) return 14000 / 8000;
+  if (achievement >= 116) return 12500 / 8000;
+  if (achievement >= 111) return 11000 / 8000;
+  if (achievement >= 106) return 9500 / 8000;
   if (achievement >= 100) return 1.0;
-  if (achievement >= 90) return 0.7;
-  if (achievement >= 80) return 0.6;
+  if (achievement >= 90) return 6500 / 8000;
+  if (achievement >= 80) return 5000 / 8000;
   return 0;
 }
 
 /**
  * AC bonus system
  * Based on Air Conditioner quantity achievement percentage only
+ * AC keeps its own special unit-based calculation.
  */
 export function calculateACBonus(achievement: number): number {
   if (achievement >= 131) return 14500;
@@ -34,9 +48,14 @@ export function calculateACBonus(achievement: number): number {
  * Get the bonus tier label based on achievement
  */
 export function getBonusTier(achievement: number): string {
+  if (achievement >= 131) return '193.75%';
+  if (achievement >= 121) return '175%';
+  if (achievement >= 116) return '156.25%';
+  if (achievement >= 111) return '137.5%';
+  if (achievement >= 106) return '118.75%';
   if (achievement >= 100) return '100%';
-  if (achievement >= 90) return '70%';
-  if (achievement >= 80) return '60%';
+  if (achievement >= 90) return '81.25%';
+  if (achievement >= 80) return '62.5%';
   return '0%';
 }
 
@@ -96,16 +115,11 @@ export function calculateCategoryStats(
   let total: number;
 
   if (isValueBased) {
-    // Washing, Kitchen, and Entertainment are value-based.
-    // selling_value is the unit selling value, so multiply by quantity.
     total = categorySales.reduce(
       (sum, sale) => sum + (Number(sale.selling_value) * Number(sale.quantity)),
       0
     );
   } else {
-    // AC target is quantity-based, but ONLY Air Conditioner units count toward AC target.
-    // Air Purifier belongs to the AC section for extra incentive display,
-    // but it does NOT count toward AC target quantity.
     total = categorySales.reduce((sum, sale) => {
       if (sale.model.sub_category === 'air_conditioner') {
         return sum + Number(sale.quantity);
@@ -150,8 +164,6 @@ export function calculateCategoryStats(
     bonusEarned = bonus * multiplier;
   }
 
-  // Extra incentive is calculated for all sales inside the category.
-  // For AC section, this includes both Air Conditioner and Air Purifier.
   const extraIncentive = categorySales.reduce(
     (sum, sale) => sum + (Number(sale.model.extra_incentive) * Number(sale.quantity)),
     0

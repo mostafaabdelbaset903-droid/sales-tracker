@@ -70,16 +70,21 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
   const grandTotalDisplay = useCountUp(data.grandTotal);
 
   return (
-    <div className="space-y-6">
-      <div className="animate-fade-up">
+    <div className="relative space-y-6">
+      {/* Ambient background field — slow, quiet, never competes with data */}
+      <AmbientField />
+
+      <div className="relative animate-fade-up">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Dashboard
+          </h1>
           <Sparkles className="w-5 h-5 text-primary/70" />
         </div>
         <p className="text-muted-foreground mt-1">{currentMonth} Performance</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      <div className="relative grid grid-cols-1 lg:grid-cols-4 gap-4">
         <CategoryCard
           categoryKey="washing"
           stats={data.washing}
@@ -98,7 +103,7 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
         <CategoryCard categoryKey="ac" stats={data.ac} delayClass="stagger-4" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="relative grid grid-cols-1 md:grid-cols-4 gap-4">
         <SummaryCard
           title="Washing Bonus"
           value={data.washing.bonusEarned}
@@ -139,11 +144,9 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
         />
       </div>
 
-      <div
-        className="relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm animate-fade-up stagger-5 card-lift"
-      >
+      <div className="relative overflow-hidden rounded-2xl glass-surface glass-edge p-6 animate-fade-up stagger-5 card-lift">
         <div
-          className="absolute inset-0 opacity-[0.07] pointer-events-none"
+          className="absolute inset-0 opacity-[0.09] pointer-events-none"
           style={{
             background:
               "radial-gradient(circle at 85% 20%, var(--primary), transparent 60%)",
@@ -151,7 +154,7 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
         />
         <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
@@ -164,7 +167,7 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
             </div>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold text-primary tabular-nums">
+            <div className="text-4xl font-bold tracking-tight text-primary tabular-nums">
               {formatCurrency(Math.round(grandTotalDisplay))}
             </div>
             <div className="text-sm text-muted-foreground mt-1">
@@ -175,7 +178,7 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
         </div>
       </div>
 
-      <div className="bg-card rounded-xl border border-border p-6 shadow-sm animate-fade-up stagger-6">
+      <div className="relative rounded-2xl glass-surface glass-edge p-6 animate-fade-up stagger-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">
           Earnings Breakdown
         </h2>
@@ -233,6 +236,67 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
   );
 }
 
+/**
+ * Quiet animated backdrop: two large, very low-opacity glows that drift
+ * slowly. Purely decorative, sits behind everything, never intercepts
+ * clicks, and respects prefers-reduced-motion via the CSS animation rules.
+ */
+function AmbientField() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+    >
+      <div
+        className="absolute -top-32 -right-24 h-[420px] w-[420px] rounded-full blur-3xl animate-drift-glow"
+        style={{
+          background:
+            "radial-gradient(circle, color-mix(in oklch, var(--primary) 22%, transparent), transparent 70%)",
+        }}
+      />
+      <div
+        className="absolute top-1/3 -left-32 h-[380px] w-[380px] rounded-full blur-3xl animate-drift-glow"
+        style={{
+          background:
+            "radial-gradient(circle, color-mix(in oklch, var(--cat-entertainment) 16%, transparent), transparent 70%)",
+          animationDelay: "3s",
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * One-shot confetti burst, purely CSS-driven. Renders a fixed small set of
+ * pieces with randomized (but deterministic per category) drift/color so it
+ * never re-randomizes on re-render and never loops.
+ */
+function ConfettiBurst({ colorVar }: { colorVar: string }) {
+  const pieces = [-26, -14, -4, 6, 16, 28];
+
+  return (
+    <div
+      aria-hidden="true"
+      className="absolute left-0 right-0 top-0 h-0 overflow-visible pointer-events-none"
+    >
+      {pieces.map((drift, i) => (
+        <span
+          key={i}
+          className="confetti-piece"
+          style={
+            {
+              "--drift": `${drift}px`,
+              "--piece-color": colorVar,
+              animationDelay: `${i * 70}ms`,
+              left: `${50 + drift * 0.6}%`,
+            } as React.CSSProperties
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
 interface CategoryCardProps {
   categoryKey: CategoryKey;
   stats: CategoryStats;
@@ -252,6 +316,7 @@ function CategoryCard({ categoryKey, stats, delayClass }: CategoryCardProps) {
 
   const achievementColor = tierColorVar(stats.achievement);
   const isMaxed = stats.achievement >= 131;
+  const hasAchieved = stats.achievement >= 100;
 
   const remainingTiers = VALUE_BASED_BONUS_TIERS.filter(
     (tier) => stats.achievement < tier.percent
@@ -262,11 +327,16 @@ function CategoryCard({ categoryKey, stats, delayClass }: CategoryCardProps) {
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-xl border border-border bg-card p-5 shadow-sm card-lift animate-fade-up ${delayClass}`}
+      className={`group relative overflow-hidden rounded-2xl glass-surface glass-edge p-5 card-lift animate-fade-up ${delayClass} ${
+        hasAchieved ? "achievement-glow" : ""
+      }`}
+      style={hasAchieved ? ({ "--glow-color": catColorVar } as React.CSSProperties) : undefined}
     >
+      {hasAchieved && <ConfettiBurst colorVar={catColorVar} />}
+
       {isMaxed && (
         <div
-          className="absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-20 blur-xl"
+          className="absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-25 blur-2xl animate-float-soft"
           style={{ background: catColorVar }}
         />
       )}
@@ -274,13 +344,19 @@ function CategoryCard({ categoryKey, stats, delayClass }: CategoryCardProps) {
       <div className="relative flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-105"
-            style={{ backgroundColor: catColorVar, color: catFgVar }}
+            className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-105 ring-1 ring-white/10"
+            style={{
+              backgroundColor: catColorVar,
+              color: catFgVar,
+              boxShadow: `0 4px 14px -2px color-mix(in oklch, ${catColorVar} 55%, transparent)`,
+            }}
           >
             <Icon className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">{stats.label}</h3>
+            <h3 className="font-semibold tracking-tight text-foreground">
+              {stats.label}
+            </h3>
             <p className="text-xs text-muted-foreground">
               {stats.isValueBased ? "Value Target" : "Unit Target"}
             </p>
@@ -304,7 +380,7 @@ function CategoryCard({ categoryKey, stats, delayClass }: CategoryCardProps) {
       <div className="relative space-y-3">
         <div className="flex items-end justify-between">
           <div>
-            <p className="text-2xl font-bold text-foreground tabular-nums">
+            <p className="text-3xl font-bold tracking-tight text-foreground tabular-nums">
               {stats.isValueBased
                 ? formatCurrency(Math.round(totalDisplay))
                 : `${Math.round(totalDisplay)} units`}
@@ -329,14 +405,17 @@ function CategoryCard({ categoryKey, stats, delayClass }: CategoryCardProps) {
         </div>
 
         <div className="space-y-1">
-          <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+          <div className="relative h-2.5 bg-muted rounded-full overflow-hidden">
             <div
-              className="h-full rounded-full transition-[width] duration-700 ease-out"
+              className="relative h-full rounded-full transition-[width] duration-700 ease-out overflow-hidden"
               style={{
                 width: `${progressDisplay}%`,
                 backgroundColor: achievementColor,
+                boxShadow: `0 0 10px 0 color-mix(in oklch, ${achievementColor} 60%, transparent)`,
               }}
-            />
+            >
+              <span className="progress-beam" />
+            </div>
           </div>
 
           <div className="flex justify-between text-[10px] text-muted-foreground">
@@ -457,13 +536,13 @@ function SummaryCard({
 
   return (
     <div
-      className={`group rounded-xl border border-border bg-card p-5 shadow-sm card-lift animate-fade-up ${delayClass}`}
+      className={`group relative rounded-2xl glass-surface glass-edge p-5 card-lift animate-fade-up ${delayClass}`}
     >
       <div className="flex items-center gap-3 mb-3">
         <div
-          className="flex h-8 w-8 items-center justify-center rounded-lg transition-transform duration-300 group-hover:scale-110"
+          className="flex h-9 w-9 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 ring-1 ring-white/10"
           style={{
-            backgroundColor: "color-mix(in oklch, " + catColorVar + " 15%, transparent)",
+            backgroundColor: "color-mix(in oklch, " + catColorVar + " 16%, transparent)",
             color: catColorVar,
           }}
         >
@@ -471,7 +550,7 @@ function SummaryCard({
         </div>
         <span className="text-sm text-muted-foreground">{title}</span>
       </div>
-      <p className="text-2xl font-bold text-foreground tabular-nums">
+      <p className="text-2xl font-bold tracking-tight text-foreground tabular-nums">
         {formatCurrency(Math.round(display))}
       </p>
       <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
@@ -495,7 +574,10 @@ function BreakdownRow({ label, value, tier, categoryKey }: BreakdownRowProps) {
       <div className="flex items-center gap-2.5">
         <span
           className="h-2 w-2 rounded-full transition-transform duration-200 group-hover:scale-125"
-          style={{ backgroundColor: catColorVar }}
+          style={{
+            backgroundColor: catColorVar,
+            boxShadow: `0 0 6px 0 color-mix(in oklch, ${catColorVar} 70%, transparent)`,
+          }}
         />
         <span className="text-muted-foreground">{label}</span>
       </div>

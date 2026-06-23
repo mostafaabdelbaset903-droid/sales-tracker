@@ -46,6 +46,33 @@
   --warning: oklch(0.75 0.15 75);
   --warning-foreground: oklch(0.3 0.02 75);
 
+  /* ---- Category identity tokens ---- */
+  /* Washing — deep cobalt: dependable, core business */
+  --cat-washing: oklch(0.55 0.19 256);
+  --cat-washing-soft: oklch(0.94 0.03 256);
+  --cat-washing-foreground: oklch(0.98 0 0);
+
+  /* Kitchen — warm emerald: fresh, everyday */
+  --cat-kitchen: oklch(0.58 0.15 162);
+  --cat-kitchen-soft: oklch(0.94 0.035 162);
+  --cat-kitchen-foreground: oklch(0.98 0 0);
+
+  /* Entertainment — violet: leisure, premium */
+  --cat-entertainment: oklch(0.55 0.2 302);
+  --cat-entertainment-soft: oklch(0.94 0.035 302);
+  --cat-entertainment-foreground: oklch(0.98 0 0);
+
+  /* AC — amber-teal (cooling but energetic): seasonal, unit-based */
+  --cat-ac: oklch(0.62 0.13 217);
+  --cat-ac-soft: oklch(0.94 0.03 217);
+  --cat-ac-foreground: oklch(0.98 0 0);
+
+  /* Tier colors for achievement bands, used consistently everywhere */
+  --tier-low: oklch(0.6 0.21 25);
+  --tier-mid: oklch(0.72 0.16 75);
+  --tier-good: oklch(0.6 0.16 235);
+  --tier-best: oklch(0.6 0.16 160);
+
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.2 0.02 250);
   --sidebar-primary: oklch(0.55 0.18 250);
@@ -96,6 +123,28 @@
 
   --warning: oklch(0.75 0.15 75);
   --warning-foreground: oklch(0.16 0.01 75);
+
+  /* ---- Category identity tokens (dark) ---- */
+  --cat-washing: oklch(0.66 0.19 256);
+  --cat-washing-soft: oklch(0.27 0.06 256);
+  --cat-washing-foreground: oklch(0.99 0 0);
+
+  --cat-kitchen: oklch(0.68 0.15 162);
+  --cat-kitchen-soft: oklch(0.27 0.06 162);
+  --cat-kitchen-foreground: oklch(0.13 0.02 162);
+
+  --cat-entertainment: oklch(0.68 0.19 302);
+  --cat-entertainment-soft: oklch(0.28 0.07 302);
+  --cat-entertainment-foreground: oklch(0.99 0 0);
+
+  --cat-ac: oklch(0.7 0.12 217);
+  --cat-ac-soft: oklch(0.27 0.06 217);
+  --cat-ac-foreground: oklch(0.14 0.02 217);
+
+  --tier-low: oklch(0.65 0.21 25);
+  --tier-mid: oklch(0.76 0.15 75);
+  --tier-good: oklch(0.68 0.15 235);
+  --tier-best: oklch(0.68 0.16 160);
 
   --sidebar: oklch(0.16 0.015 250);
   --sidebar-foreground: oklch(0.96 0.005 250);
@@ -151,6 +200,27 @@
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
 
+  --color-cat-washing: var(--cat-washing);
+  --color-cat-washing-soft: var(--cat-washing-soft);
+  --color-cat-washing-foreground: var(--cat-washing-foreground);
+
+  --color-cat-kitchen: var(--cat-kitchen);
+  --color-cat-kitchen-soft: var(--cat-kitchen-soft);
+  --color-cat-kitchen-foreground: var(--cat-kitchen-foreground);
+
+  --color-cat-entertainment: var(--cat-entertainment);
+  --color-cat-entertainment-soft: var(--cat-entertainment-soft);
+  --color-cat-entertainment-foreground: var(--cat-entertainment-foreground);
+
+  --color-cat-ac: var(--cat-ac);
+  --color-cat-ac-soft: var(--cat-ac-soft);
+  --color-cat-ac-foreground: var(--cat-ac-foreground);
+
+  --color-tier-low: var(--tier-low);
+  --color-tier-mid: var(--tier-mid);
+  --color-tier-good: var(--tier-good);
+  --color-tier-best: var(--tier-best);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -191,57 +261,160 @@
   }
 }
 
-/* Fix hard-coded light category headers in Dark Mode */
+/* ---------------------------------------------------------------- */
+/* Motion system                                                     */
+/* ---------------------------------------------------------------- */
+
 @layer utilities {
-  .dark .bg-blue-50 {
-    background-color: oklch(0.24 0.06 250) !important;
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
-  .dark .bg-emerald-50 {
-    background-color: oklch(0.24 0.06 155) !important;
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
-  .dark .bg-purple-50 {
-    background-color: oklch(0.24 0.06 300) !important;
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }
 
-  .dark .bg-cyan-50 {
-    background-color: oklch(0.24 0.06 215) !important;
+  @keyframes shimmer-sweep {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(220%);
+    }
   }
 
-  .dark .border-blue-200 {
-    border-color: oklch(0.48 0.12 250) !important;
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in oklch, var(--ring) 45%, transparent);
+    }
+    100% {
+      box-shadow: 0 0 0 10px color-mix(in oklch, var(--ring) 0%, transparent);
+    }
   }
 
-  .dark .border-emerald-200 {
-    border-color: oklch(0.48 0.12 155) !important;
+  @keyframes float-soft {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
   }
 
-  .dark .border-purple-200 {
-    border-color: oklch(0.48 0.12 300) !important;
+  .animate-fade-up {
+    animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
-  .dark .border-cyan-200 {
-    border-color: oklch(0.48 0.12 215) !important;
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out both;
   }
 
-  .dark .text-muted-foreground {
-    color: oklch(0.78 0.012 250) !important;
+  .animate-scale-in {
+    animation: scale-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
-  .dark .text-foreground {
-    color: oklch(0.96 0.005 250) !important;
+  .animate-float-soft {
+    animation: float-soft 3.5s ease-in-out infinite;
   }
 
-  .dark .bg-card {
-    background-color: var(--card) !important;
+  .stagger-1 {
+    animation-delay: 60ms;
+  }
+  .stagger-2 {
+    animation-delay: 120ms;
+  }
+  .stagger-3 {
+    animation-delay: 180ms;
+  }
+  .stagger-4 {
+    animation-delay: 240ms;
+  }
+  .stagger-5 {
+    animation-delay: 300ms;
+  }
+  .stagger-6 {
+    animation-delay: 360ms;
   }
 
-  .dark .bg-background {
-    background-color: var(--background) !important;
+  .card-lift {
+    transition:
+      transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.28s ease;
   }
 
-  .dark .border-border {
-    border-color: var(--border) !important;
+  .card-lift:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 12px 24px -8px color-mix(in oklch, var(--foreground) 12%, transparent),
+      0 4px 8px -4px color-mix(in oklch, var(--foreground) 8%, transparent);
+  }
+
+  .shimmer-mask {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer-mask::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 50%;
+    background: linear-gradient(
+      100deg,
+      transparent,
+      color-mix(in oklch, white 22%, transparent),
+      transparent
+    );
+    animation: shimmer-sweep 2.6s ease-in-out infinite;
+  }
+
+  .dark .shimmer-mask::after {
+    background: linear-gradient(
+      100deg,
+      transparent,
+      color-mix(in oklch, white 10%, transparent),
+      transparent
+    );
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-fade-up,
+    .animate-fade-in,
+    .animate-scale-in,
+    .animate-float-soft,
+    .card-lift,
+    .shimmer-mask::after {
+      animation: none !important;
+      transition: none !important;
+    }
+
+    .card-lift:hover {
+      transform: none;
+    }
   }
 }

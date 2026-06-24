@@ -418,3 +418,156 @@
     }
   }
 }
+
+/* ---------------------------------------------------------------- */
+/* Glass surfaces, light sweeps, achievement glow & confetti          */
+/* ---------------------------------------------------------------- */
+
+@layer utilities {
+  /* Frosted glass card surface — subtle, real depth via layered
+     borders + inset highlight, not a flat color. */
+  .glass-surface {
+    position: relative;
+    background:
+      linear-gradient(
+        165deg,
+        color-mix(in oklch, var(--card) 96%, white 4%) 0%,
+        var(--card) 55%
+      );
+    backdrop-filter: blur(14px);
+    border: 1px solid color-mix(in oklch, var(--border) 70%, transparent);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklch, white 14%, transparent) inset,
+      0 1px 2px 0 color-mix(in oklch, var(--foreground) 4%, transparent),
+      0 12px 28px -12px color-mix(in oklch, var(--foreground) 14%, transparent);
+  }
+
+  .dark .glass-surface {
+    background:
+      linear-gradient(
+        165deg,
+        color-mix(in oklch, var(--card) 100%, white 6%) 0%,
+        var(--card) 60%
+      );
+    box-shadow:
+      0 1px 0 0 color-mix(in oklch, white 6%, transparent) inset,
+      0 1px 2px 0 color-mix(in oklch, black 30%, transparent),
+      0 16px 32px -14px color-mix(in oklch, black 55%, transparent);
+  }
+
+  /* Hairline top edge — like a studio light catching a beveled frame */
+  .glass-edge::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg,
+      color-mix(in oklch, white 35%, transparent),
+      transparent 35%,
+      transparent 65%,
+      color-mix(in oklch, var(--ring) 25%, transparent)
+    );
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  @keyframes beam-sweep {
+    from {
+      transform: translateX(-120%);
+    }
+    to {
+      transform: translateX(420%);
+    }
+  }
+
+  /* Single precise light beam traveling through the progress fill,
+     once, while the bar is animating in. */
+  .progress-beam {
+    position: absolute;
+    inset: 0;
+    width: 30%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklch, white 65%, transparent),
+      transparent
+    );
+    animation: beam-sweep 1.1s cubic-bezier(0.4, 0, 0.2, 1) 0.15s 1 both;
+    mix-blend-mode: overlay;
+  }
+
+  @keyframes achievement-pulse {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 0 color-mix(in oklch, var(--glow-color, var(--primary)) 55%, transparent),
+        0 0 24px 2px color-mix(in oklch, var(--glow-color, var(--primary)) 28%, transparent);
+    }
+    50% {
+      box-shadow:
+        0 0 0 6px color-mix(in oklch, var(--glow-color, var(--primary)) 0%, transparent),
+        0 0 36px 6px color-mix(in oklch, var(--glow-color, var(--primary)) 42%, transparent);
+    }
+  }
+
+  .achievement-glow {
+    animation: achievement-pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes confetti-fall {
+    0% {
+      transform: translate3d(0, -10px, 0) rotate(0deg);
+      opacity: 0;
+    }
+    8% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate3d(var(--drift, 12px), 90px, 0) rotate(280deg);
+      opacity: 0;
+    }
+  }
+
+  .confetti-piece {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 1px;
+    background: var(--piece-color, var(--primary));
+    animation: confetti-fall 1.1s cubic-bezier(0.2, 0.6, 0.4, 1) both;
+    pointer-events: none;
+  }
+
+  @keyframes drift-glow {
+    0%,
+    100% {
+      opacity: 0.5;
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      opacity: 0.85;
+      transform: translate(2%, -2%) scale(1.05);
+    }
+  }
+
+  .animate-drift-glow {
+    animation: drift-glow 9s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .progress-beam,
+    .achievement-glow,
+    .confetti-piece,
+    .animate-drift-glow {
+      animation: none !important;
+    }
+  }
+}

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Model } from "@/lib/types";
 import { SUB_CATEGORY_TO_MAIN, SUB_CATEGORY_LABELS, MAIN_CATEGORY_LABELS } from "@/lib/types";
-import { Check, Loader2, Info } from "lucide-react";
+import { Check, Loader2, Info, AlertTriangle } from "lucide-react";
 
 interface AddSaleFormProps {
   models: Model[];
@@ -32,6 +32,16 @@ export function AddSaleForm({ models }: AddSaleFormProps) {
   const selectedModel = models.find((m) => m.id === formData.model_id);
   const mainCategory = selectedModel ? SUB_CATEGORY_TO_MAIN[selectedModel.sub_category] : null;
   const isAC = mainCategory === "ac";
+
+  // Out-of-stock warning is purely informational here — the database
+  // trigger is what actually keeps current_stock accurate, so we never
+  // block submission on this. It's last known as of last_stock_update,
+  // not a live company-wide figure.
+  const isOutOfStock = !!selectedModel && selectedModel.current_stock <= 0;
+  const isLowStock =
+    !!selectedModel &&
+    selectedModel.current_stock > 0 &&
+    selectedModel.current_stock <= 2;
 
   // When model changes, auto-fill default price if available
   const handleModelChange = (modelId: string) => {
@@ -80,6 +90,9 @@ export function AddSaleForm({ models }: AddSaleFormProps) {
         setError(insertError.message);
         return;
       }
+
+      // current_stock is decremented automatically by a database trigger
+      // on the sales insert above — no extra write needed here.
 
       setSuccess(true);
 
@@ -206,6 +219,7 @@ export function AddSaleForm({ models }: AddSaleFormProps) {
               {categoryModels.map((model) => (
                 <option key={model.id} value={model.id}>
                   {model.model_name} ({SUB_CATEGORY_LABELS[model.sub_category]})
+                  {model.current_stock <= 0 ? " — Out of stock" : ""}
                 </option>
               ))}
             </optgroup>
@@ -217,6 +231,36 @@ export function AddSaleForm({ models }: AddSaleFormProps) {
           </p>
         )}
       </div>
+
+      {/* Stock warning — informational only, never blocks the sale */}
+      {isOutOfStock && (
+        <div className="p-3 rounded-lg bg-destructive/10 flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-destructive mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-destructive">
+              This model shows 0 in stock
+            </p>
+            <p className="text-muted-foreground">
+              Based on the last stock update. You can still record this
+              sale, but consider checking with the warehouse first.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!isOutOfStock && isLowStock && (
+        <div className="p-3 rounded-lg bg-amber-500/10 flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5" />
+          <div className="text-sm">
+            <p className="font-medium text-amber-600">
+              Only {selectedModel?.current_stock} left in stock
+            </p>
+            <p className="text-muted-foreground">
+              Based on the last stock update.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Category Info */}
       {selectedModel && (

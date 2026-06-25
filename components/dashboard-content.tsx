@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Settings, SaleWithModel, CategoryStats } from "@/lib/types";
 import {
   calculateDashboardData,
@@ -10,6 +10,7 @@ import {
   getBonusTier,
 } from "@/lib/calculations";
 import { useCountUp } from "@/lib/use-count-up";
+import { useSound, type SoundName } from "@/lib/use-sound";
 import {
   WashingMachine,
   UtensilsCrossed,
@@ -20,6 +21,8 @@ import {
   ChevronDown,
   Sparkles,
   TrendingUp,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 interface DashboardContentProps {
@@ -68,20 +71,41 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
   });
 
   const grandTotalDisplay = useCountUp(data.grandTotal);
+  const { play, muted, toggleMuted } = useSound();
 
   return (
     <div className="relative space-y-6">
       {/* Ambient background field — slow, quiet, never competes with data */}
       <AmbientField />
 
-      <div className="relative animate-fade-up">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Dashboard
-          </h1>
-          <Sparkles className="w-5 h-5 text-primary/70" />
+      <div className="relative flex items-start justify-between animate-fade-up">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Dashboard
+            </h1>
+            <Sparkles className="w-5 h-5 text-primary/70" />
+          </div>
+          <p className="text-muted-foreground mt-1">{currentMonth} Performance</p>
         </div>
-        <p className="text-muted-foreground mt-1">{currentMonth} Performance</p>
+
+        <button
+          type="button"
+          onClick={() => {
+            const wasMuted = muted;
+            toggleMuted();
+            if (wasMuted) play("click");
+          }}
+          className="flex h-9 w-9 items-center justify-center rounded-xl glass-surface glass-edge text-muted-foreground hover:text-foreground transition-colors"
+          aria-label={muted ? "Unmute sound effects" : "Mute sound effects"}
+          title={muted ? "Sound off" : "Sound on"}
+        >
+          {muted ? (
+            <VolumeX className="w-4 h-4" />
+          ) : (
+            <Volume2 className="w-4 h-4" />
+          )}
+        </button>
       </div>
 
       <div className="relative grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -89,18 +113,26 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
           categoryKey="washing"
           stats={data.washing}
           delayClass="stagger-1"
+          play={play}
         />
         <CategoryCard
           categoryKey="kitchen"
           stats={data.kitchen}
           delayClass="stagger-2"
+          play={play}
         />
         <CategoryCard
           categoryKey="entertainment"
           stats={data.entertainment}
           delayClass="stagger-3"
+          play={play}
         />
-        <CategoryCard categoryKey="ac" stats={data.ac} delayClass="stagger-4" />
+        <CategoryCard
+          categoryKey="ac"
+          stats={data.ac}
+          delayClass="stagger-4"
+          play={play}
+        />
       </div>
 
       <div className="relative grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -113,6 +145,7 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
           icon={Award}
           categoryKey="washing"
           delayClass="stagger-1"
+          play={play}
         />
         <SummaryCard
           title="Kitchen Bonus"
@@ -123,6 +156,7 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
           icon={Award}
           categoryKey="kitchen"
           delayClass="stagger-2"
+          play={play}
         />
         <SummaryCard
           title="Entertainment Bonus"
@@ -133,6 +167,7 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
           icon={Award}
           categoryKey="entertainment"
           delayClass="stagger-3"
+          play={play}
         />
         <SummaryCard
           title="Extra Incentives"
@@ -141,6 +176,7 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
           icon={Gift}
           categoryKey="ac"
           delayClass="stagger-4"
+          play={play}
         />
       </div>
 
@@ -301,9 +337,10 @@ interface CategoryCardProps {
   categoryKey: CategoryKey;
   stats: CategoryStats;
   delayClass: string;
+  play: (name: SoundName) => void;
 }
 
-function CategoryCard({ categoryKey, stats, delayClass }: CategoryCardProps) {
+function CategoryCard({ categoryKey, stats, delayClass, play }: CategoryCardProps) {
   const [expanded, setExpanded] = useState(false);
   const meta = CATEGORY_META[categoryKey];
   const Icon = meta.icon;
@@ -318,6 +355,17 @@ function CategoryCard({ categoryKey, stats, delayClass }: CategoryCardProps) {
   const isMaxed = stats.achievement >= 131;
   const hasAchieved = stats.achievement >= 100;
 
+  // Fire the celebratory chime once per mount/transition into achieved
+  // territory — purely a presentation reaction to already-computed stats,
+  // never recalculates or alters stats.achievement itself.
+  const previouslyAchieved = useRef(hasAchieved);
+  useEffect(() => {
+    if (hasAchieved && !previouslyAchieved.current) {
+      play("achievement");
+    }
+    previouslyAchieved.current = hasAchieved;
+  }, [hasAchieved, play]);
+
   const remainingTiers = VALUE_BASED_BONUS_TIERS.filter(
     (tier) => stats.achievement < tier.percent
   );
@@ -327,6 +375,7 @@ function CategoryCard({ categoryKey, stats, delayClass }: CategoryCardProps) {
 
   return (
     <div
+      onMouseEnter={() => play("hover")}
       className={`group relative overflow-hidden rounded-2xl glass-surface glass-edge p-5 card-lift animate-fade-up ${delayClass} ${
         hasAchieved ? "achievement-glow" : ""
       }`}
@@ -364,7 +413,11 @@ function CategoryCard({ categoryKey, stats, delayClass }: CategoryCardProps) {
         </div>
 
         <button
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => {
+            const next = !expanded;
+            setExpanded(next);
+            play(next ? "expand" : "collapse");
+          }}
           className="p-1 rounded-md transition-colors hover:bg-accent"
           aria-label={expanded ? "Collapse details" : "Expand details"}
           aria-expanded={expanded}
@@ -520,6 +573,7 @@ interface SummaryCardProps {
   icon: React.ComponentType<{ className?: string }>;
   categoryKey: CategoryKey;
   delayClass: string;
+  play: (name: SoundName) => void;
 }
 
 function SummaryCard({
@@ -529,6 +583,7 @@ function SummaryCard({
   icon: Icon,
   categoryKey,
   delayClass,
+  play,
 }: SummaryCardProps) {
   const meta = CATEGORY_META[categoryKey];
   const display = useCountUp(value, 900);
@@ -536,6 +591,7 @@ function SummaryCard({
 
   return (
     <div
+      onMouseEnter={() => play("hover")}
       className={`group relative rounded-2xl glass-surface glass-edge p-5 card-lift animate-fade-up ${delayClass}`}
     >
       <div className="flex items-center gap-3 mb-3">

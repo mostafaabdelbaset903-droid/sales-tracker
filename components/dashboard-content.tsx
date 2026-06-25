@@ -180,7 +180,7 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
         />
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl glass-surface glass-edge p-6 animate-fade-up stagger-5 card-lift">
+      <div className="relative overflow-hidden rounded-2xl glass-surface glass-edge p-6 animate-bounce-in stagger-5 card-lift">
         <div
           className="absolute inset-0 opacity-[0.09] pointer-events-none"
           style={{
@@ -214,7 +214,7 @@ export function DashboardContent({ sales, settings }: DashboardContentProps) {
         </div>
       </div>
 
-      <div className="relative rounded-2xl glass-surface glass-edge p-6 animate-fade-up stagger-6">
+      <div className="relative rounded-2xl glass-surface glass-edge p-6 animate-bounce-in stagger-6">
         <h2 className="text-lg font-semibold text-foreground mb-4">
           Earnings Breakdown
         </h2>
@@ -303,27 +303,49 @@ function AmbientField() {
 }
 
 /**
- * One-shot confetti burst, purely CSS-driven. Renders a fixed small set of
- * pieces with randomized (but deterministic per category) drift/color so it
- * never re-randomizes on re-render and never loops.
+ * Bigger, sustained confetti celebration, purely CSS-driven. Renders a
+ * larger fixed set of pieces with deterministic (not re-randomized on
+ * re-render) drift/rotation/size/shape variety, staggered across ~1s so
+ * the burst feels continuous rather than a single instant flash.
  */
 function ConfettiBurst({ colorVar }: { colorVar: string }) {
-  const pieces = [-26, -14, -4, 6, 16, 28];
+  // [drift px, spin deg, delay ms, shape class, size class]
+  const pieces: Array<[number, number, number, string, string]> = [
+    [-58, 300, 0, "confetti-round", ""],
+    [-46, 420, 40, "", "confetti-large"],
+    [-34, 260, 80, "confetti-bar", ""],
+    [-24, 380, 30, "confetti-round", "confetti-large"],
+    [-14, 300, 110, "", ""],
+    [-6, 440, 60, "confetti-bar", ""],
+    [4, 280, 90, "confetti-round", ""],
+    [12, 360, 20, "", "confetti-large"],
+    [22, 320, 130, "confetti-bar", ""],
+    [32, 260, 70, "confetti-round", "confetti-large"],
+    [44, 400, 100, "", ""],
+    [56, 300, 50, "confetti-bar", ""],
+    [-50, 340, 150, "confetti-round", ""],
+    [-20, 420, 160, "", "confetti-large"],
+    [10, 300, 170, "confetti-bar", ""],
+    [38, 380, 140, "confetti-round", ""],
+  ];
+
+  const altColor = "color-mix(in oklch, " + colorVar + " 55%, var(--tier-best) 45%)";
 
   return (
     <div
       aria-hidden="true"
       className="absolute left-0 right-0 top-0 h-0 overflow-visible pointer-events-none"
     >
-      {pieces.map((drift, i) => (
+      {pieces.map(([drift, spin, delay, shape, size], i) => (
         <span
           key={i}
-          className="confetti-piece"
+          className={`confetti-piece ${shape} ${size}`}
           style={
             {
               "--drift": `${drift}px`,
-              "--piece-color": colorVar,
-              animationDelay: `${i * 70}ms`,
+              "--spin": `${spin}deg`,
+              "--piece-color": i % 3 === 0 ? altColor : colorVar,
+              animationDelay: `${delay}ms`,
               left: `${50 + drift * 0.6}%`,
             } as React.CSSProperties
           }
@@ -376,7 +398,7 @@ function CategoryCard({ categoryKey, stats, delayClass, play }: CategoryCardProp
   return (
     <div
       onMouseEnter={() => play("hover")}
-      className={`group relative overflow-hidden rounded-2xl glass-surface glass-edge p-5 card-lift animate-fade-up ${delayClass} ${
+      className={`group relative overflow-hidden rounded-2xl glass-surface glass-edge p-5 card-lift animate-bounce-in ${delayClass} ${
         hasAchieved ? "achievement-glow" : ""
       }`}
       style={hasAchieved ? ({ "--glow-color": catColorVar } as React.CSSProperties) : undefined}
@@ -592,7 +614,7 @@ function SummaryCard({
   return (
     <div
       onMouseEnter={() => play("hover")}
-      className={`group relative rounded-2xl glass-surface glass-edge p-5 card-lift animate-fade-up ${delayClass}`}
+      className={`group relative rounded-2xl glass-surface glass-edge p-5 card-lift animate-bounce-in ${delayClass}`}
     >
       <div className="flex items-center gap-3 mb-3">
         <div

@@ -17,6 +17,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useState } from "react";
+import { useSound } from "@/lib/use-sound";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -31,6 +32,7 @@ const navItems = [
 export function Navigation() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { play } = useSound();
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -63,6 +65,8 @@ export function Navigation() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onMouseEnter={() => play("hover")}
+                  onClick={() => play("click")}
                   className={cn(
                     "relative flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-colors duration-200",
                     isActive
@@ -95,7 +99,10 @@ export function Navigation() {
           {/* Mobile Menu Button */}
           <button
             className="rounded-xl p-2 text-foreground hover:bg-accent md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            onClick={() => {
+              setMobileMenuOpen(!mobileMenuOpen);
+              play("click");
+            }}
             aria-label="Toggle navigation menu"
           >
             <span className="relative block h-5 w-5">
@@ -137,7 +144,10 @@ export function Navigation() {
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        play("click");
+                      }}
                       style={{ transitionDelay: mobileMenuOpen ? `${idx * 30}ms` : "0ms" }}
                       className={cn(
                         "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors",
